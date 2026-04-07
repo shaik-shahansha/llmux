@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -716,6 +716,83 @@
     .db-ls.ok { background: rgba(74,222,128,0.1); color: var(--green); }
     .db-ls.fb { background: rgba(250,204,21,0.1); color: var(--yellow); }
     .db-ls.rl { background: rgba(251,146,60,0.1); color: var(--orange); }
+
+    /* ── Light Theme ── */
+    [data-theme="light"] {
+      --bg: #ffffff;
+      --bg2: #f4f4f8;
+      --bg3: #eaeaf2;
+      --border: #dedee8;
+      --border2: #c8c8d8;
+      --text: #1a1a2e;
+      --text-muted: #5c5c78;
+      --accent: #6b57f0;
+      --accent2: #7c6afb;
+      --accent3: #9580fc;
+      --green: #15803d;
+      --blue: #1d4ed8;
+      --orange: #c2410c;
+      --pink: #be185d;
+      --yellow: #a16207;
+    }
+
+    [data-theme="light"] nav {
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    [data-theme="light"] .compare-table tbody tr:nth-child(even) {
+      background: rgba(0, 0, 0, 0.025);
+    }
+
+    [data-theme="light"] .code-header {
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    [data-theme="light"] .dash-url {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    [data-theme="light"] .db-prow,
+    [data-theme="light"] .db-lrow {
+      border-bottom-color: var(--border);
+    }
+
+    [data-theme="light"] .tok-comment { color: #64748b; }
+    [data-theme="light"] .tok-keyword { color: #7c3aed; }
+    [data-theme="light"] .tok-string  { color: #15803d; }
+    [data-theme="light"] .tok-func    { color: #1d4ed8; }
+    [data-theme="light"] .tok-var     { color: #c2410c; }
+    [data-theme="light"] .tok-num     { color: #a16207; }
+    [data-theme="light"] .tok-type    { color: #b45309; }
+
+    [data-theme="light"] .kw  { color: #7c3aed; }
+    [data-theme="light"] .str { color: #15803d; }
+    [data-theme="light"] .cmt { color: #64748b; }
+    [data-theme="light"] .fn  { color: #1d4ed8; }
+    [data-theme="light"] .var { color: #c2410c; }
+    [data-theme="light"] .num { color: #a16207; }
+
+    /* ── Theme Toggle Button ── */
+    .theme-toggle {
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .theme-toggle:hover {
+      border-color: var(--accent);
+      background: var(--bg2);
+    }
   </style>
 </head>
 <body>
@@ -736,8 +813,9 @@
       <li><a href="#settings">Settings</a></li>
       <li><a href="#playground">Playground</a></li>
       <li><a href="#deploy">Deploy</a></li>
-      <li><a href="https://github.com/your-org/LLMux-llm-gateway" class="nav-cta">GitHub →</a></li>
+      <li><a href="https://github.com/shaik-shahansha/llmux" class="nav-cta">GitHub →</a></li>
     </ul>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle theme">🌙</button>
   </div>
 </nav>
 
@@ -752,7 +830,7 @@
       rotation, zero lock-in.
     </p>
     <div class="hero-actions">
-      <a class="btn btn-primary" href="https://github.com/your-org/LLMux-llm-gateway">
+      <a class="btn btn-primary" href="https://github.com/shaik-shahansha/llmux">
         ⭐ Star on GitHub
       </a>
       <a class="btn btn-outline" href="#examples">See Examples →</a>
@@ -1945,12 +2023,12 @@ MY_PROVIDER_KEY_2=optional-second-key</pre>
     <h2>Ready to unify your AI stack?</h2>
     <p>Clone, configure, deploy. Three commands to a production AI gateway that never goes down.</p>
     <div class="cta-actions">
-      <a class="btn btn-primary" href="https://github.com/your-org/LLMux-llm-gateway">⭐ Get Started on GitHub</a>
-      <a class="btn btn-outline" href="https://github.com/your-org/LLMux-llm-gateway/blob/main/README.md">📖 Read the Docs</a>
+      <a class="btn btn-primary" href="https://github.com/shaik-shahansha/llmux">⭐ Get Started on GitHub</a>
+      <a class="btn btn-outline" href="https://github.com/shaik-shahansha/llmux/blob/main/README.md">📖 Read the Docs</a>
     </div>
     <div style="margin-top:40px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;max-width:500px;margin-left:auto;margin-right:auto;text-align:left">
       <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:12px;font-weight:600">🚀 3-COMMAND QUICKSTART</div>
-      <pre style="font-size:0.82rem;font-family:var(--font-mono)">git clone https://github.com/your-org/LLMux-llm-gateway
+      <pre style="font-size:0.82rem;font-family:var(--font-mono)">git clone https://github.com/shaik-shahansha/llmux
 cd LLMux-llm-gateway &amp;&amp; pnpm install
 cp config/providers.yaml.example config/providers.yaml
 <span style="color:var(--text-muted)"># add your API keys...</span>
@@ -1964,11 +2042,11 @@ pnpm dev</pre>
   <div class="footer-inner">
     <div class="footer-logo">⚡ LLMux</div>
     <div class="footer-links">
-      <a href="https://github.com/your-org/LLMux-llm-gateway">GitHub</a>
-      <a href="https://github.com/your-org/LLMux-llm-gateway/blob/main/README.md">Docs</a>
-      <a href="https://github.com/your-org/LLMux-llm-gateway/blob/main/CONTRIBUTING.md">Contributing</a>
-      <a href="https://github.com/your-org/LLMux-llm-gateway/issues">Issues</a>
-      <a href="https://github.com/your-org/LLMux-llm-gateway/blob/main/LICENSE">MIT License</a>
+      <a href="https://github.com/shaik-shahansha/llmux">GitHub</a>
+      <a href="https://github.com/shaik-shahansha/llmux/blob/main/README.md">Docs</a>
+      <a href="https://github.com/shaik-shahansha/llmux/blob/main/CONTRIBUTING.md">Contributing</a>
+      <a href="https://github.com/shaik-shahansha/llmux/issues">Issues</a>
+      <a href="https://github.com/shaik-shahansha/llmux/blob/main/LICENSE">MIT License</a>
     </div>
     <div class="footer-copy">Built with ⚡ — Every free token counts.</div>
   </div>
@@ -2020,6 +2098,28 @@ pnpm dev</pre>
     });
   }, { threshold: 0.3 });
   sections.forEach(s => observer.observe(s));
+
+  // ── Theme toggle ──
+  const themeToggle = document.getElementById('themeToggle');
+  const html = document.documentElement;
+
+  function updateToggleIcon() {
+    themeToggle.textContent = html.dataset.theme === 'dark' ? '☀️' : '🌙';
+  }
+
+  themeToggle.addEventListener('click', () => {
+    const isDark = html.dataset.theme === 'dark';
+    html.dataset.theme = isDark ? 'light' : 'dark';
+    localStorage.setItem('llmux-theme', html.dataset.theme);
+    updateToggleIcon();
+  });
+
+  // Restore saved preference (default: light)
+  const savedTheme = localStorage.getItem('llmux-theme');
+  if (savedTheme) {
+    html.dataset.theme = savedTheme;
+    updateToggleIcon();
+  }
 </script>
 </body>
 </html>
