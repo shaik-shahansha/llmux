@@ -1,0 +1,2025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LLMux — Multiplex every LLM. Never hit a limit.</title>
+  <meta name="description" content="LLMux is a self-hostable AI gateway that unifies 22+ free-tier providers (Groq, Gemini, Pollinations, xAI Grok, OpenRouter, and more) into a single OpenAI-compatible API." />
+  <meta property="og:title" content="LLMux — Multiplex every LLM. Never hit a limit." />
+  <meta property="og:description" content="Self-hostable AI gateway with 20+ free providers, automatic fallback, multi-key rotation, and full OpenAI compatibility." />
+  <meta property="og:type" content="website" />
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --bg2: #111118;
+      --bg3: #16161e;
+      --border: #1e1e2e;
+      --border2: #2a2a3e;
+      --text: #e2e2f0;
+      --text-muted: #8888aa;
+      --accent: #7c6afb;
+      --accent2: #a78bfa;
+      --accent3: #c4b5fd;
+      --green: #4ade80;
+      --blue: #60a5fa;
+      --orange: #fb923c;
+      --pink: #f472b6;
+      --yellow: #facc15;
+      --radius: 10px;
+      --radius-lg: 16px;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      line-height: 1.6;
+      font-size: 16px;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+    /* ── Layout ── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+    /* ── Nav ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 10, 15, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 0;
+    }
+    nav .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--accent2);
+      text-decoration: none;
+    }
+    .nav-logo .bolt { font-size: 1.3rem; }
+    .nav-links {
+      display: flex;
+      gap: 6px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); background: var(--border); }
+    .nav-cta {
+      background: var(--accent);
+      color: #fff !important;
+      font-weight: 600;
+    }
+    .nav-cta:hover { background: var(--accent2) !important; }
+
+    /* ── Hero ── */
+    .hero {
+      padding: 100px 0 80px;
+      text-align: center;
+      background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124,106,251,0.12), transparent);
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(124,106,251,0.12);
+      border: 1px solid rgba(124,106,251,0.3);
+      color: var(--accent3);
+      border-radius: 100px;
+      padding: 5px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      margin-bottom: 28px;
+    }
+    .hero h1 {
+      font-size: clamp(2.4rem, 6vw, 4.2rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 20px;
+    }
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--accent2), var(--pink), var(--blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      font-size: 1.18rem;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 40px;
+      line-height: 1.7;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 60px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 11px 22px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.15s;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+    .btn-primary:hover { background: #6b57f0; transform: translateY(-1px); }
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border2);
+    }
+    .btn-outline:hover { background: var(--bg3); border-color: var(--accent); }
+
+    .hero-code {
+      max-width: 700px;
+      margin: 0 auto;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .hero-code-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      padding: 0 16px;
+      gap: 2px;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      font-family: var(--font-mono);
+    }
+    .tab-btn.active { color: var(--accent2); border-bottom-color: var(--accent); }
+    .code-panel { display: none; padding: 20px; }
+    .code-panel.active { display: block; }
+    pre {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      line-height: 1.65;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .kw { color: var(--accent2); }
+    .str { color: var(--green); }
+    .cmt { color: var(--text-muted); font-style: italic; }
+    .fn { color: var(--blue); }
+    .var { color: var(--orange); }
+    .num { color: var(--yellow); }
+
+    /* ── Stats ── */
+    .stats {
+      padding: 60px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 32px;
+      text-align: center;
+    }
+    .stat-num {
+      font-size: 2.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent2), var(--pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label { color: var(--text-muted); font-size: 0.88rem; margin-top: 4px; }
+
+    /* ── Sections ── */
+    .section { padding: 90px 0; }
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-size: clamp(1.7rem, 3.5vw, 2.5rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+    .section-sub {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 560px;
+    }
+
+    /* ── Feature grid ── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 50px;
+    }
+    .feature-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 26px;
+      transition: all 0.2s;
+    }
+    .feature-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      background: rgba(124,106,251,0.12);
+      border: 1px solid rgba(124,106,251,0.2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      margin-bottom: 16px;
+    }
+    .feature-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .feature-card p {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+
+    /* ── Provider tables ── */
+    .providers-section { padding: 90px 0; background: var(--bg2); }
+    .provider-tabs {
+      display: flex;
+      gap: 4px;
+      margin: 40px 0 28px;
+      flex-wrap: wrap;
+    }
+    .ptab {
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: 1px solid var(--border2);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .ptab.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    .ptab:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+
+    .ptable-wrap { display: none; }
+    .ptable-wrap.active { display: block; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    th {
+      text-align: left;
+      padding: 12px 16px;
+      background: var(--bg3);
+      color: var(--text-muted);
+      font-size: 0.77rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(124,106,251,0.04); }
+    .provider-name { font-weight: 700; }
+    .tier-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 100px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .tier-1 { background: rgba(74,222,128,0.12); color: var(--green); border: 1px solid rgba(74,222,128,0.2); }
+    .tier-2 { background: rgba(96,165,250,0.12); color: var(--blue); border: 1px solid rgba(96,165,250,0.2); }
+    .model-list { color: var(--text-muted); font-family: var(--font-mono); font-size: 0.78rem; }
+    .free-badge { color: var(--green); font-size: 0.77rem; font-weight: 600; }
+
+    /* ── Code examples ── */
+    .examples-section { padding: 90px 0; }
+    .example-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .etab {
+      padding: 7px 16px;
+      border-radius: 6px;
+      border: 1px solid var(--border2);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .etab.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .etab:hover:not(.active) { border-color: var(--text-muted); color: var(--text); }
+
+    .code-block {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+    }
+    .code-lang {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+    .code-body { padding: 22px; overflow-x: auto; }
+    .copy-btn {
+      background: var(--border);
+      border: none;
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .copy-btn:hover { background: var(--accent); color: white; }
+
+    .example-wrap { display: none; }
+    .example-wrap.active { display: block; }
+
+    /* ── Multi-key section ── */
+    .multikey-section { padding: 90px 0; background: var(--bg2); }
+    .multikey-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-top: 50px;
+      align-items: start;
+    }
+    @media (max-width: 768px) { .multikey-grid { grid-template-columns: 1fr; } }
+    .multikey-steps { display: flex; flex-direction: column; gap: 20px; }
+    .step {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .step-num {
+      min-width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(124,106,251,0.15);
+      border: 1px solid rgba(124,106,251,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--accent2);
+    }
+    .step-content h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+    .step-content p { font-size: 0.85rem; color: var(--text-muted); }
+
+    /* ── How it works / routing ── */
+    .routing-section { padding: 90px 0; }
+    .routing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 18px;
+      margin-top: 50px;
+    }
+    .strategy-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      transition: all 0.2s;
+    }
+    .strategy-card:hover { border-color: var(--accent); }
+    .strategy-name {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--accent2);
+      font-weight: 700;
+      background: rgba(124,106,251,0.08);
+      padding: 4px 10px;
+      border-radius: 5px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+    .strategy-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; }
+    .strategy-card p { font-size: 0.84rem; color: var(--text-muted); line-height: 1.5; }
+    .strategy-best {
+      font-size: 0.75rem;
+      color: var(--green);
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    /* ── Fallback diagram ── */
+    .fallback-flow {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-wrap: wrap;
+      margin: 40px 0;
+      justify-content: center;
+    }
+    .flow-box {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 12px 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: center;
+      min-width: 160px;
+    }
+    .flow-arrow {
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      padding: 0 8px;
+      flex-shrink: 0;
+    }
+    .flow-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 4px;
+    }
+    .flow-col { display: flex; flex-direction: column; align-items: center; }
+
+    /* ── Deploy section ── */
+    .deploy-section { padding: 90px 0; background: var(--bg2); }
+    .deploy-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 18px;
+      margin-top: 50px;
+    }
+    .deploy-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 26px;
+      transition: all 0.2s;
+    }
+    .deploy-card:hover { border-color: var(--border2); }
+    .deploy-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+    .deploy-card p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.6; }
+
+    /* ── Add provider ── */
+    .addprovider-section { padding: 90px 0; }
+    .steps-numbered { display: flex; flex-direction: column; gap: 28px; max-width: 800px; }
+    .big-step {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .big-step-num {
+      min-width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .big-step-content { flex: 1; }
+    .big-step-content h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; }
+
+    /* ── CTA ── */
+    .cta-section {
+      padding: 100px 0;
+      text-align: center;
+      background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(124,106,251,0.08), transparent);
+    }
+    .cta-section h2 {
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+    .cta-section p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      margin-bottom: 36px;
+    }
+    .cta-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0;
+    }
+    .footer-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .footer-logo { color: var(--accent2); font-weight: 700; font-size: 1rem; }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { color: var(--text-muted); text-decoration: none; font-size: 0.875rem; transition: color 0.15s; }
+    .footer-links a:hover { color: var(--text); }
+    .footer-copy { color: var(--text-muted); font-size: 0.8rem; }
+
+    @media (max-width: 600px) {
+      .nav-links { display: none; }
+      .nav-links.mobile-open { display: flex; flex-direction: column; position: absolute; top: 60px; left: 0; right: 0; background: var(--bg); padding: 16px; border-bottom: 1px solid var(--border); }
+    }
+
+    /* ── Code highlight helpers ── */
+    .tok-comment { color: #6e738d; font-style: italic; }
+    .tok-keyword { color: #c4b5fd; }
+    .tok-string { color: #a6da95; }
+    .tok-func { color: #8aadf4; }
+    .tok-var { color: #f4a261; }
+    .tok-num { color: #f8bd96; }
+    .tok-type { color: #eed49f; }
+
+    /* ── Alert box ── */
+    .alert {
+      background: rgba(124,106,251,0.07);
+      border: 1px solid rgba(124,106,251,0.2);
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 0.88rem;
+      color: var(--accent3);
+      margin: 20px 0;
+    }
+    .alert strong { color: var(--accent2); }
+
+    /* ── Comparison table ── */
+    .compare-table {
+      width: 100%; border-collapse: collapse; font-size: 0.88rem;
+    }
+    .compare-table th, .compare-table td {
+      padding: 11px 16px; text-align: center; border: 1px solid var(--border);
+    }
+    .compare-table th:first-child, .compare-table td:first-child { text-align: left; }
+    .compare-table thead { background: var(--bg3); }
+    .compare-table thead th { font-weight: 700; color: var(--text); font-size: 0.82rem; }
+    .compare-llmux { color: var(--accent2); font-weight: 800; }
+    .compare-table tbody tr:nth-child(even) { background: rgba(255,255,255,0.015); }
+    .compare-highlight { background: rgba(124,106,251,0.05) !important; }
+    .compare-highlight td:first-child { color: var(--accent3); }
+    .yes { color: var(--green); font-weight: 600; }
+    .no { color: var(--text-muted); }
+    .partial { color: var(--yellow); }
+
+    /* ── Compare cards ── */
+    .compare-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .compare-card {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px;
+    }
+    .compare-card-icon { font-size: 1.6rem; margin-bottom: 12px; }
+    .compare-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+    .compare-card p { color: var(--text-muted); font-size: 0.87rem; line-height: 1.6; }
+    .compare-card em { color: var(--accent3); font-style: normal; font-weight: 600; }
+
+    /* ── Dashboard preview mock ── */
+    .dash-chrome { background: var(--bg2); border: 1px solid var(--border2); border-radius: 12px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    .dash-bar { background: var(--bg3); padding: 10px 16px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--border); }
+    .dash-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dash-dot.red { background: #ff5f57; }
+    .dash-dot.yellow { background: #ffbd2e; }
+    .dash-dot.green { background: #28ca42; }
+    .dash-url { margin-left: 10px; font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); background: rgba(255,255,255,0.04); padding: 3px 12px; border-radius: 4px; }
+    .dash-body { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .db-header { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 8px; border-bottom: 1px solid var(--border); }
+    .db-logo { font-weight: 800; font-size: 0.9rem; color: var(--accent2); }
+    .db-slash { color: var(--text-muted); font-weight: 400; }
+    .db-badges { display: flex; gap: 8px; align-items: center; }
+    .db-live { display: flex; align-items: center; gap: 5px; background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.2); color: var(--green); border-radius: 100px; padding: 2px 8px; font-size: 0.65rem; font-weight: 700; }
+    .db-pulse { width: 5px; height: 5px; background: var(--green); border-radius: 50%; animation: pulse 1.5s infinite; }
+    .db-uptime { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted); background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 2px 7px; }
+    .db-stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+    .db-stat { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; }
+    .db-s-label { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 4px; }
+    .db-s-val { font-size: 1.2rem; font-weight: 800; font-family: var(--font-mono); }
+    .db-s-sub { font-size: 0.6rem; color: var(--text-muted); margin-top: 2px; }
+    .db-stat-accent .db-s-val { color: var(--accent2); }
+    .db-stat-green .db-s-val { color: var(--green); }
+    .db-stat-red .db-s-val { color: #f87171; }
+    .db-stat-blue .db-s-val { color: var(--blue); }
+    .db-stat-yellow .db-s-val { color: var(--yellow); }
+    .db-stat-orange .db-s-val { color: var(--orange); }
+    .db-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .db-panel { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    .db-panel-header { padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 0.72rem; font-weight: 700; }
+    .db-prow { display: grid; grid-template-columns: 10px 1fr 40px 1fr 40px 40px; gap: 8px; align-items: center; padding: 6px 12px; border-bottom: 1px solid rgba(30,30,46,0.8); font-size: 0.7rem; }
+    .db-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .db-dot.green { background: var(--green); box-shadow: 0 0 5px rgba(74,222,128,0.5); }
+    .db-dot.yellow { background: var(--yellow); }
+    .db-pname { font-weight: 600; font-size: 0.72rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .db-ptag { font-size: 0.6rem; font-weight: 700; padding: 1px 5px; border-radius: 3px; text-transform: uppercase; }
+    .db-ptag.blue { background: rgba(96,165,250,0.12); color: var(--blue); }
+    .db-ptag.orange { background: rgba(251,146,60,0.12); color: var(--orange); }
+    .db-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; position: relative; }
+    .db-bfill { position: absolute; top: 0; left: 0; height: 100%; border-radius: 2px; }
+    .db-bfill.green { background: var(--green); }
+    .db-bfill.yellow { background: var(--yellow); }
+    .db-lat { color: var(--text-muted); font-family: var(--font-mono); text-align: right; font-size: 0.68rem; }
+    .db-tier { font-size: 0.6rem; font-weight: 800; padding: 1px 5px; border-radius: 3px; text-align: center; }
+    .db-tier.t1 { background: rgba(74,222,128,0.1); color: var(--green); }
+    .db-tier.t2 { background: rgba(96,165,250,0.1); color: var(--blue); }
+    .db-lrow { display: grid; grid-template-columns: 52px 64px 1fr 52px 40px; gap: 8px; align-items: center; padding: 5px 12px; border-bottom: 1px solid rgba(30,30,46,0.8); font-size: 0.68rem; }
+    .db-ltime, .db-lms { font-family: var(--font-mono); color: var(--text-muted); }
+    .db-lprov { color: var(--accent2); font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .db-lmodel { color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .db-ls { font-size: 0.62rem; font-weight: 700; padding: 2px 5px; border-radius: 3px; text-transform: uppercase; text-align: center; }
+    .db-ls.ok { background: rgba(74,222,128,0.1); color: var(--green); }
+    .db-ls.fb { background: rgba(250,204,21,0.1); color: var(--yellow); }
+    .db-ls.rl { background: rgba(251,146,60,0.1); color: var(--orange); }
+  </style>
+</head>
+<body>
+
+<!-- ── Nav ── -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="#">
+      <span class="bolt">⚡</span>
+      LLMux
+    </a>
+    <ul class="nav-links">
+      <li><a href="#compare">Why LLMux</a></li>
+      <li><a href="#providers">Providers</a></li>
+      <li><a href="#examples">Examples</a></li>
+      <li><a href="#multi-key">Multi-Key</a></li>
+      <li><a href="#routing">Routing</a></li>
+      <li><a href="#settings">Settings</a></li>
+      <li><a href="#playground">Playground</a></li>
+      <li><a href="#deploy">Deploy</a></li>
+      <li><a href="https://github.com/your-org/LLMux-llm-gateway" class="nav-cta">GitHub →</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge">✦ v1.0 &nbsp;|&nbsp; MIT License &nbsp;|&nbsp; OpenAI-Compatible</div>
+    <h1>Every Free AI Provider.<br /><span>One Unified API.</span></h1>
+    <p class="hero-sub">
+      LLMux unifies 20+ free-tier providers — text, image, audio, video — behind a
+      single OpenAI-compatible gateway. Automatic fallback, smart routing, multi-key
+      rotation, zero lock-in.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="https://github.com/your-org/LLMux-llm-gateway">
+        ⭐ Star on GitHub
+      </a>
+      <a class="btn btn-outline" href="#examples">See Examples →</a>
+    </div>
+
+    <!-- Code tabs -->
+    <div class="hero-code">
+      <div class="hero-code-tabs">
+        <button class="tab-btn active" data-tab="python-hero">Python</button>
+        <button class="tab-btn" data-tab="ts-hero">TypeScript</button>
+        <button class="tab-btn" data-tab="curl-hero">cURL</button>
+      </div>
+      <div class="code-panel active" id="python-hero">
+        <pre><span class="tok-keyword">from</span> <span class="tok-func">openai</span> <span class="tok-keyword">import</span> OpenAI
+
+<span class="tok-comment"># Just change base_url — your existing code works</span>
+client = OpenAI(
+    api_key=<span class="tok-string">"any"</span>,
+    base_url=<span class="tok-string">"http://localhost:3000/v1"</span>,
+)
+
+response = client.chat.completions.create(
+    model=<span class="tok-string">"llama-3.3-70b"</span>,  <span class="tok-comment"># or "gemini-flash", "deepseek-r1", ...</span>
+    messages=[{<span class="tok-string">"role"</span>: <span class="tok-string">"user"</span>, <span class="tok-string">"content"</span>: <span class="tok-string">"Hello!"</span>}],
+)
+<span class="tok-func">print</span>(response.choices[<span class="tok-num">0</span>].message.content)</pre>
+      </div>
+      <div class="code-panel" id="ts-hero">
+        <pre><span class="tok-keyword">import</span> OpenAI <span class="tok-keyword">from</span> <span class="tok-string">"openai"</span>;
+
+<span class="tok-comment">// Change one line — everything else stays the same</span>
+<span class="tok-keyword">const</span> client = <span class="tok-keyword">new</span> <span class="tok-type">OpenAI</span>({
+  apiKey: <span class="tok-string">"any"</span>,
+  baseURL: <span class="tok-string">"http://localhost:3000/v1"</span>,
+});
+
+<span class="tok-keyword">const</span> { choices } = <span class="tok-keyword">await</span> client.chat.completions.create({
+  model: <span class="tok-string">"auto"</span>,  <span class="tok-comment">// LLMux auto-picks the best available provider</span>
+  messages: [{ role: <span class="tok-string">"user"</span>, content: <span class="tok-string">"Write a poem"</span> }],
+  stream: <span class="tok-keyword">true</span>,
+});</pre>
+      </div>
+      <div class="code-panel" id="curl-hero">
+        <pre><span class="tok-comment"># Text completion</span>
+curl http://localhost:3000/v1/chat/completions \
+  -H <span class="tok-string">"Content-Type: application/json"</span> \
+  -d <span class="tok-string">'{"model":"gemini-flash","messages":[{"role":"user","content":"Hi!"}]}'</span>
+
+<span class="tok-comment"># Image generation</span>
+curl http://localhost:3000/v1/images/generations \
+  -H <span class="tok-string">"Content-Type: application/json"</span> \
+  -d <span class="tok-string">'{"prompt":"a robot in a garden","model":"pollinations-flux"}'</span>
+
+<span class="tok-comment"># List all models</span>
+curl http://localhost:3000/v1/models</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Stats ── -->
+<section class="stats">
+  <div class="container">
+    <div class="stats-grid">
+      <div>
+        <div class="stat-num">20+</div>
+        <div class="stat-label">Free providers</div>
+      </div>
+      <div>
+        <div class="stat-num">4</div>
+        <div class="stat-label">Modalities: text, image, audio, video</div>
+      </div>
+      <div>
+        <div class="stat-num">5</div>
+        <div class="stat-label">Routing strategies</div>
+      </div>
+      <div>
+        <div class="stat-num">$0</div>
+        <div class="stat-label">Monthly cost on free tiers</div>
+      </div>
+      <div>
+        <div class="stat-num">1</div>
+        <div class="stat-label">Line change to migrate</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Features ── -->
+<section class="section">
+  <div class="container">
+    <div class="section-label">Core Features</div>
+    <h2 class="section-title">Everything you need.<br />Nothing you don't.</h2>
+    <p class="section-sub">LLMux handles the hard parts so you can focus on building.</p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🔌</div>
+        <h3>OpenAI-Compatible API</h3>
+        <p>Drop-in replacement for the OpenAI API. Works with every OpenAI SDK, LangChain, LlamaIndex, and any tool that speaks OpenAI.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <h3>Automatic Fallback</h3>
+        <p>3-level fallback: retry the same provider, try another with the same model, then any compatible provider. Your app never goes down.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🗝️</div>
+        <h3>Multi-Key Rotation</h3>
+        <p>Add multiple API keys per provider. LLMux round-robins and auto-rotates on 429 errors. Triple your effective rate limit instantly.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Rate Limit Tracking</h3>
+        <p>Tracks RPM, RPD, TPM, and TPD per provider. In-memory by default, Redis-backed for multi-instance deployments.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>Full Streaming Support</h3>
+        <p>SSE streaming proxied transparently across all text providers. Your UI gets tokens as fast as the provider sends them.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3>Smart Routing</h3>
+        <p>5 built-in strategies: priority, round-robin, least-busy, latency-based, random-weighted. Switch in one config line.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🖼️</div>
+        <h3>Multi-Modal</h3>
+        <p>Text, image (FLUX, Seedream, GPT-Image), audio (TTS + STT), and video — all through the same OpenAI-compatible surface.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📡</div>
+        <h3>Live Dashboard</h3>
+        <p>Real-time provider health, rate limit states, and request metrics at /dashboard. Know what's healthy before you need it.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔐</div>
+        <h3>Gateway Auth</h3>
+        <p>Optional shared-secret auth on /v1/* routes. Deploy securely to your team without exposing underlying provider keys.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Why LLMux / Comparison ── -->
+<section class="section" id="compare" style="background:var(--bg2)">
+  <div class="container">
+    <div class="section-label">Why LLMux?</div>
+    <h2 class="section-title">Built differently.<br />Because free tiers deserve better.</h2>
+    <p class="section-sub">Other gateways were designed for paid-API workflows. LLMux was built from day one around the constraints of free-tier providers — rate limits, multi-key pools, and zero-downtime fallback.</p>
+
+    <div style="margin-top:50px;overflow-x:auto">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th><span class="compare-llmux">⚡ LLMux</span></th>
+            <th>OpenRouter</th>
+            <th>LiteLLM</th>
+            <th>Portkey OSS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="compare-highlight">
+            <td><strong>Per-key rotation on 429</strong></td>
+            <td class="yes">✅ Built-in</td>
+            <td class="no">❌</td>
+            <td class="no">❌</td>
+            <td class="no">❌</td>
+          </tr>
+          <tr class="compare-highlight">
+            <td><strong>Rate-limit-aware routing</strong></td>
+            <td class="yes">✅ Full</td>
+            <td class="no">❌</td>
+            <td class="partial">⚠ Partial</td>
+            <td class="no">❌</td>
+          </tr>
+          <tr class="compare-highlight">
+            <td><strong>Multi-key pool per provider</strong></td>
+            <td class="yes">✅ Unlimited</td>
+            <td class="no">❌</td>
+            <td class="no">❌</td>
+            <td class="no">❌</td>
+          </tr>
+          <tr>
+            <td>Self-hosted (no cloud dependency)</td>
+            <td class="yes">✅</td>
+            <td class="no">❌ Cloud-only</td>
+            <td class="yes">✅</td>
+            <td class="partial">⚠ Limited</td>
+          </tr>
+          <tr>
+            <td>OpenAI-compatible API</td>
+            <td class="yes">✅</td>
+            <td class="yes">✅</td>
+            <td class="yes">✅</td>
+            <td class="yes">✅</td>
+          </tr>
+          <tr>
+            <td>Free-tier providers (20+)</td>
+            <td class="yes">✅ 20+</td>
+            <td class="partial">⚠ Some</td>
+            <td class="yes">✅</td>
+            <td class="yes">✅</td>
+          </tr>
+          <tr>
+            <td>Automatic 3-level fallback</td>
+            <td class="yes">✅ 3 levels</td>
+            <td class="partial">⚠ Basic</td>
+            <td class="yes">✅</td>
+            <td class="yes">✅</td>
+          </tr>
+          <tr>
+            <td>Multiple routing strategies</td>
+            <td class="yes">✅ 5 built-in</td>
+            <td class="no">❌</td>
+            <td class="yes">✅</td>
+            <td class="partial">⚠ Partial</td>
+          </tr>
+          <tr>
+            <td>Zero database required</td>
+            <td class="yes">✅</td>
+            <td class="yes">N/A</td>
+            <td class="no">❌ Needs DB</td>
+            <td class="yes">✅</td>
+          </tr>
+          <tr>
+            <td>TypeScript / Node.js</td>
+            <td class="yes">✅</td>
+            <td class="yes">N/A</td>
+            <td class="no">❌ Python</td>
+            <td class="yes">✅</td>
+          </tr>
+          <tr>
+            <td>Live operational dashboard</td>
+            <td class="yes">✅ Built-in</td>
+            <td class="yes">✅ Hosted</td>
+            <td class="partial">⚠ Paid tier</td>
+            <td class="partial">⚠ Basic</td>
+          </tr>
+          <tr>
+            <td>Text + Image + Audio + Video</td>
+            <td class="yes">✅ All 4</td>
+            <td class="yes">✅</td>
+            <td class="yes">✅</td>
+            <td class="yes">✅</td>
+          </tr>
+          <tr>
+            <td>Cost to self-host on free tiers</td>
+            <td class="yes">$0</td>
+            <td class="no">$0 + markup</td>
+            <td class="yes">$0</td>
+            <td class="yes">$0</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="compare-cards" style="margin-top:50px">
+      <div class="compare-card">
+        <div class="compare-card-icon">🔄</div>
+        <h3>vs OpenRouter</h3>
+        <p>OpenRouter is a hosted cloud proxy — your traffic goes through their servers and you pay a per-token markup. LLMux runs on <em>your hardware</em>, rotates <em>your own API keys</em>, and costs zero per token on free tiers.</p>
+      </div>
+      <div class="compare-card">
+        <div class="compare-card-icon">🐍</div>
+        <h3>vs LiteLLM</h3>
+        <p>LiteLLM is excellent but Python-only, requires PostgreSQL + Redis for full features, and doesn't do per-key multi-key rotation on 429s. LLMux is TypeScript, runs with zero database, and key rotation is built into every provider.</p>
+      </div>
+      <div class="compare-card">
+        <div class="compare-card-icon">☁️</div>
+        <h3>vs Portkey OSS</h3>
+        <p>Portkey's core observability and load balancing features require their hosted cloud service. The OSS version has limited support for multi-key rotation and budget-aware routing. LLMux is 100% self-contained by design.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Dashboard Preview ── -->
+<section class="section" id="dashboard-preview">
+  <div class="container">
+    <div class="section-label">Live Dashboard</div>
+    <h2 class="section-title">Full operational visibility.<br />Zero extra tools.</h2>
+    <p class="section-sub">The built-in dashboard at <code style="background:var(--bg3);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);font-size:0.85em">/dashboard</code> gives you real-time insight into every request, every provider, and every rate limit — no setup required.</p>
+
+    <div class="dashboard-preview" style="margin-top:48px">
+      <!-- Dashboard mock -->
+      <div class="dash-chrome">
+        <div class="dash-bar"><span class="dash-dot red"></span><span class="dash-dot yellow"></span><span class="dash-dot green"></span><span class="dash-url">localhost:3000/dashboard</span></div>
+        <div class="dash-body">
+          <!-- Header -->
+          <div class="db-header">
+            <div class="db-logo">⚡ LLMux <span class="db-slash">/ dashboard</span></div>
+            <div class="db-badges">
+              <span class="db-live"><span class="db-pulse"></span>LIVE</span>
+              <span class="db-uptime">uptime: 4h 22m</span>
+            </div>
+          </div>
+          <!-- Stat row -->
+          <div class="db-stats">
+            <div class="db-stat db-stat-accent"><div class="db-s-label">Total Requests</div><div class="db-s-val">2.4k</div></div>
+            <div class="db-stat db-stat-green"><div class="db-s-label">Succeeded</div><div class="db-s-val">2.3k</div><div class="db-s-sub">96.1% rate</div></div>
+            <div class="db-stat db-stat-red"><div class="db-s-label">Failed</div><div class="db-s-val">93</div><div class="db-s-sub">42 rate-limited</div></div>
+            <div class="db-stat db-stat-blue"><div class="db-s-label">Tokens Used</div><div class="db-s-val">1.8M</div></div>
+            <div class="db-stat db-stat-yellow"><div class="db-s-label">Providers</div><div class="db-s-val">14</div><div class="db-s-sub">11 healthy</div></div>
+            <div class="db-stat db-stat-orange"><div class="db-s-label">Fallbacks</div><div class="db-s-val">37</div></div>
+          </div>
+          <!-- Two columns -->
+          <div class="db-grid">
+            <!-- Provider health -->
+            <div class="db-panel">
+              <div class="db-panel-header">Provider Health Matrix</div>
+              <div class="db-prow"><span class="db-dot green"></span><span class="db-pname">Groq Llama</span><span class="db-ptag blue">text</span><span class="db-bar"><span class="db-bfill green" style="width:40%"></span></span><span class="db-lat">180ms</span><span class="db-tier t1">⭐ T1</span></div>
+              <div class="db-prow"><span class="db-dot green"></span><span class="db-pname">Cerebras</span><span class="db-ptag blue">text</span><span class="db-bar"><span class="db-bfill green" style="width:25%"></span></span><span class="db-lat">240ms</span><span class="db-tier t1">⭐ T1</span></div>
+              <div class="db-prow"><span class="db-dot green"></span><span class="db-pname">Gemini Flash</span><span class="db-ptag blue">text</span><span class="db-bar"><span class="db-bfill yellow" style="width:72%"></span></span><span class="db-lat">520ms</span><span class="db-tier t1">⭐ T1</span></div>
+              <div class="db-prow"><span class="db-dot yellow"></span><span class="db-pname">Pollinations</span><span class="db-ptag orange">image</span><span class="db-bar"><span class="db-bfill green" style="width:15%"></span></span><span class="db-lat">1.2s</span><span class="db-tier t2">✦ T2</span></div>
+              <div class="db-prow"><span class="db-dot green"></span><span class="db-pname">Cloudflare AI</span><span class="db-ptag orange">image</span><span class="db-bar"><span class="db-bfill green" style="width:30%"></span></span><span class="db-lat">890ms</span><span class="db-tier t1">⭐ T1</span></div>
+            </div>
+            <!-- Request log -->
+            <div class="db-panel">
+              <div class="db-panel-header">Live Request Log</div>
+              <div class="db-lrow"><span class="db-ltime">14:23:01</span><span class="db-lprov">groq</span><span class="db-lmodel">llama-3.3-70b</span><span class="db-ls ok">success</span><span class="db-lms">182ms</span></div>
+              <div class="db-lrow"><span class="db-ltime">14:22:59</span><span class="db-lprov">gemini</span><span class="db-lmodel">gemini-flash</span><span class="db-ls ok">success</span><span class="db-lms">541ms</span></div>
+              <div class="db-lrow"><span class="db-ltime">14:22:58</span><span class="db-lprov">openrouter</span><span class="db-lmodel">deepseek-r1</span><span class="db-ls fb">fallback</span><span class="db-lms">1.1s</span></div>
+              <div class="db-lrow"><span class="db-ltime">14:22:55</span><span class="db-lprov">pollinations</span><span class="db-lmodel">flux</span><span class="db-ls ok">success</span><span class="db-lms">2.4s</span></div>
+              <div class="db-lrow"><span class="db-ltime">14:22:51</span><span class="db-lprov">groq</span><span class="db-lmodel">whisper-v3</span><span class="db-ls rl">rl</span><span class="db-lms">—</span></div>
+              <div class="db-lrow"><span class="db-ltime">14:22:49</span><span class="db-lprov">cerebras</span><span class="db-lmodel">llama-3.3-70b</span><span class="db-ls ok">success</span><span class="db-lms">231ms</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="features-grid" style="margin-top:48px">
+      <div class="feature-card">
+        <div class="feature-icon">🩺</div>
+        <h3>Provider Health Matrix</h3>
+        <p>Live status dot, RPM usage bar, average latency, and tier — for every configured provider. Spot degraded providers before they affect users.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📋</div>
+        <h3>Live Request Log</h3>
+        <p>Last 100 requests with provider, model, status, latency, and token count. Fallback chains visible inline. Updates every 3 seconds.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌡️</div>
+        <h3>Rate Limit Gauges</h3>
+        <p>RPM and RPD usage bars for each provider. Color shifts yellow → red as limits approach. Rotation events logged in real time.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Settings & Admin ── -->
+<section class="section" id="settings" style="background:var(--bg2)">
+  <div class="container">
+    <div class="section-label">Settings &amp; Admin</div>
+    <h2 class="section-title">Full control.<br />No config files needed.</h2>
+    <p class="section-sub">The settings panel at <code style="background:var(--bg3);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);font-size:0.85em">/settings</code> lets you manage providers, routing, and API keys — all from a browser.</p>
+
+    <div class="features-grid" style="margin-top:48px">
+      <div class="feature-card">
+        <div class="feature-icon">🔌</div>
+        <h3>Providers Tab</h3>
+        <p>See all providers at a glance. Enable/disable, edit API keys and rate limits, change routing tier, add new dynamic providers, and test connectivity — without touching YAML.</p>
+        <p style="color:var(--accent3);font-size:0.82rem;margin-top:8px">Status shows <strong>No API Key</strong> for providers that are enabled but missing credentials.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3>Router Tab</h3>
+        <p>Switch the active routing strategy (priority, round-robin, least-busy, latency-based, random-weighted) with a single click. Changes take effect immediately — no restart needed.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔑</div>
+        <h3>Gateway Keys Tab</h3>
+        <p>Create and revoke named API keys for clients accessing <code style="color:var(--accent3);font-family:var(--font-mono);font-size:0.9em">/v1/*</code>. Each key has a label, creation date, and can be revoked independently. Keys are shown once on creation.</p>
+      </div>
+    </div>
+
+    <!-- Gateway API Keys detail -->
+    <div style="margin-top:64px">
+      <div class="section-label">Gateway API Keys</div>
+      <h3 style="font-size:1.4rem;font-weight:800;letter-spacing:-0.02em;margin-bottom:10px">Named keys for every integration.</h3>
+      <p style="color:var(--text-muted);font-size:0.95rem;max-width:600px;margin-bottom:40px">Issue a separate gateway key for each app, team, or integration. Revoke one without affecting the rest. The <code style="color:var(--accent3);font-family:var(--font-mono)">GATEWAY_API_KEY</code> env var remains active alongside UI-managed keys.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start">
+        <div class="multikey-steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <h4>Open Gateway tab in /settings</h4>
+              <p>Navigate to /settings and click <strong>Gateway</strong> in the left sidebar.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <h4>Click ＋ New Key</h4>
+              <p>Enter a label (e.g. <code style="color:var(--accent3);font-family:var(--font-mono)">production-app</code>, <code style="color:var(--accent3);font-family:var(--font-mono)">vscode-ext</code>) and click Generate.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <h4>Copy the key — shown once only</h4>
+              <p>The full key is displayed immediately after creation. Copy it now — it cannot be retrieved later.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-content">
+              <h4>Use as a Bearer token</h4>
+              <p>Pass the key to any OpenAI SDK or HTTP client via <code style="color:var(--accent3);font-family:var(--font-mono)">Authorization: Bearer llmux-...</code></p>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;gap:16px">
+          <div class="code-block">
+            <div class="code-header">
+              <span class="code-lang">REST API — manage keys</span>
+              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            </div>
+            <div class="code-body">
+              <pre><span class="tok-comment"># List all keys</span>
+curl http://localhost:3000/api/admin/gateway-keys \
+  -H <span class="tok-string">"X-Admin-Token: $ADMIN_TOKEN"</span>
+
+<span class="tok-comment"># Create a named key</span>
+curl -X POST http://localhost:3000/api/admin/gateway-keys \
+  -H <span class="tok-string">"X-Admin-Token: $ADMIN_TOKEN"</span> \
+  -H <span class="tok-string">"Content-Type: application/json"</span> \
+  -d <span class="tok-string">'{"name": "my-app"}'</span>
+
+<span class="tok-comment"># Revoke a key</span>
+curl -X DELETE http://localhost:3000/api/admin/gateway-keys/&lt;id&gt; \
+  -H <span class="tok-string">"X-Admin-Token: $ADMIN_TOKEN"</span></pre>
+            </div>
+          </div>
+
+          <div class="code-block">
+            <div class="code-header">
+              <span class="code-lang">python — use gateway key</span>
+              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            </div>
+            <div class="code-body">
+              <pre><span class="tok-keyword">from</span> openai <span class="tok-keyword">import</span> OpenAI
+
+client = OpenAI(
+    api_key=<span class="tok-string">"llmux-xxxxxxxxxxxxxxxxxxxx"</span>,
+    base_url=<span class="tok-string">"http://localhost:3000/v1"</span>,
+)
+
+<span class="tok-comment"># All /v1/* requests now require the gateway key</span>
+response = client.chat.completions.create(
+    model=<span class="tok-string">"auto"</span>,
+    messages=[{<span class="tok-string">"role"</span>: <span class="tok-string">"user"</span>, <span class="tok-string">"content"</span>: <span class="tok-string">"Hello!"</span>}],
+)</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Playground ── -->
+<section class="section" id="playground">
+  <div class="container">
+    <div class="section-label">Playground</div>
+    <h2 class="section-title">Test every provider,<br />right in your browser.</h2>
+    <p class="section-sub">The built-in chat playground at <code style="background:var(--bg3);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);font-size:0.85em">/playground</code> lets you interactively test providers and models without writing any code.</p>
+
+    <div class="features-grid" style="margin-top:48px">
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3>Pin Any Provider</h3>
+        <p>Select a specific provider from the dropdown to route directly to it — bypassing the normal routing strategy. Great for comparing providers side-by-side.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧠</div>
+        <h3>Model Selection</h3>
+        <p>All models for the selected provider are listed in a second dropdown. The actual API model ID is sent to the provider; the friendly alias is shown in the UI. Status bar shows the provider name and model that served the last response.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>Real-Time Streaming</h3>
+        <p>Toggle streaming on or off. Streaming responses show a blinking cursor while tokens arrive, then render the complete output with a smooth fade-in.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📝</div>
+        <h3>Markdown Rendering</h3>
+        <p>Assistant responses are fully rendered as markdown — headings, bullet lists, numbered lists, fenced code blocks with syntax highlighting, tables, and blockquotes. Code blocks get a one-click copy button on hover.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Stats &amp; Tokens</h3>
+        <p>Every playground conversation is counted in the dashboard stats — Total Requests, Tokens Used, and per-provider breakdowns. Playground requests are first-class citizens.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌙</div>
+        <h3>Dark &amp; Light Themes</h3>
+        <p>Full dark/light mode toggle. Preferences are persisted in localStorage and respected across dashboard, settings, and playground pages.</p>
+      </div>
+    </div>
+
+    <div class="dash-chrome" style="margin-top:48px;max-width:800px;margin-left:auto;margin-right:auto">
+      <div class="dash-bar">
+        <span class="dash-dot red"></span><span class="dash-dot yellow"></span><span class="dash-dot green"></span>
+        <span class="dash-url">localhost:3000/playground</span>
+      </div>
+      <div class="dash-body">
+        <div style="display:flex;gap:10px;padding:4px 0;border-bottom:1px solid var(--border);margin-bottom:12px;align-items:center">
+          <div style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 12px;font-size:0.75rem;color:var(--text-muted)">Provider: <strong style="color:var(--accent2)">Groq</strong></div>
+          <div style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 12px;font-size:0.75rem;color:var(--text-muted)">Model: <strong style="color:var(--accent2)">llama-3.3-70b</strong></div>
+          <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 12px;font-size:0.75rem;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:var(--green)"></span>Stream</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;min-height:160px">
+          <div style="align-self:flex-end;background:var(--accent);color:white;border-radius:12px 12px 2px 12px;padding:10px 14px;font-size:0.82rem;max-width:65%">Explain the transformer architecture in simple terms.</div>
+          <div style="align-self:flex-start;background:var(--bg3);border:1px solid var(--border2);border-radius:2px 12px 12px 12px;padding:12px 14px;font-size:0.82rem;max-width:80%;color:var(--text)">
+            <strong style="color:var(--text)">The Transformer</strong> is a neural network architecture based on the concept of <em>attention</em>...<br/><br/>
+            <code style="background:rgba(124,106,251,0.1);padding:2px 6px;border-radius:4px;color:var(--accent3);font-family:var(--font-mono);font-size:0.75rem">attention(Q, K, V) = softmax(QKᵀ/√d) · V</code>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;padding-top:10px;border-top:1px solid var(--border);margin-top:8px">
+          <div style="flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;font-size:0.78rem;color:var(--text-muted)">Ask anything...</div>
+          <button style="background:var(--accent);border:none;color:white;border-radius:8px;padding:10px 16px;font-size:0.8rem;font-weight:600;cursor:pointer">Send ↵</button>
+        </div>
+        <div style="font-size:0.68rem;color:var(--text-muted);padding-top:6px;display:flex;justify-content:space-between">
+          <span>✦ Groq · llama-3.3-70b</span>
+          <span>382ms · 847 tokens</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Providers ── -->
+<section class="providers-section" id="providers">
+  <div class="container">
+    <div class="section-label">Providers</div>
+    <h2 class="section-title">20+ Free Providers.<br />All Modalities.</h2>
+    <p class="section-sub">Every provider is configurable in a single YAML file. No code changes needed to add or swap providers.</p>
+
+    <div class="provider-tabs">
+      <button class="ptab active" data-ptab="text-tab">📝 Text</button>
+      <button class="ptab" data-ptab="image-tab">🖼️ Image</button>
+      <button class="ptab" data-ptab="audio-tab">🔊 Audio</button>
+      <button class="ptab" data-ptab="video-tab">🎬 Video</button>
+    </div>
+
+    <!-- Text -->
+    <div class="ptable-wrap active" id="text-tab">
+      <div class="code-block">
+        <table>
+          <thead>
+            <tr><th>Provider</th><th>Tier</th><th>Top Models</th><th>Free Limits</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="provider-name">Groq</td><td><span class="tier-badge tier-1">⭐ 1</span></td><td class="model-list">GPT-OSS 120B, GPT-OSS 20B, Llama 3.3 70B, Llama 4 Scout</td><td class="free-badge">30 RPM / 14.4K RPD</td></tr>
+            <tr><td class="provider-name">Cerebras</td><td><span class="tier-badge tier-1">⭐ 1</span></td><td class="model-list">Llama 3.3 70B, Qwen3-32B</td><td class="free-badge">30 RPM / 1M TPD</td></tr>
+            <tr><td class="provider-name">Google Gemini</td><td><span class="tier-badge tier-1">⭐ 1</span></td><td class="model-list">Gemini 3.1 Pro Preview, Gemini 3 Flash, 2.5 Pro (1M–2M ctx)</td><td class="free-badge">15 RPM / 1K RPD</td></tr>
+            <tr><td class="provider-name">Mistral AI</td><td><span class="tier-badge tier-1">⭐ 1</span></td><td class="model-list">Mistral Large, Small 4 (256K), Magistral Medium, Codestral</td><td class="free-badge">~2 RPM / 500K TPM</td></tr>
+            <tr><td class="provider-name">OpenRouter</td><td><span class="tier-badge tier-2">✦ 2</span></td><td class="model-list">DeepSeek R1, DeepSeek V3, Qwen3 Coder 480B, Gemini 2.5 Flash</td><td class="free-badge">20 RPM / 50 RPD</td></tr>
+            <tr><td class="provider-name">Cloudflare Workers AI</td><td><span class="tier-badge tier-2">✦ 2</span></td><td class="model-list">Llama 3.3 70B, Llama 4 Scout, DeepSeek R1</td><td class="free-badge">10K neurons/day</td></tr>
+            <tr><td class="provider-name">Hugging Face</td><td><span class="tier-badge tier-2">✦ 2</span></td><td class="model-list">Llama 4 Scout, Llama 3.3 70B, Qwen3-235B</td><td class="free-badge">Daily limit</td></tr>
+            <tr><td class="provider-name">SambaNova</td><td><span class="tier-badge tier-2">✦ 2</span></td><td class="model-list">Llama 4 Maverick, Llama 4 Scout, DeepSeek R1/V3</td><td class="free-badge">20 RPM / 200K TPD</td></tr>
+            <tr><td class="provider-name">Cohere</td><td><span class="tier-badge tier-2">✦ 2</span></td><td class="model-list">Command A (256K), Command A Reasoning, Command A Vision</td><td class="free-badge">1K calls/month</td></tr>
+            <tr><td class="provider-name">DeepSeek</td><td><span class="tier-badge tier-2">✦ 2</span></td><td class="model-list">DeepSeek V3.2, R1 (131K ctx)</td><td class="free-badge">5M free tokens</td></tr>
+            <tr><td class="provider-name">NVIDIA NIM</td><td><span class="tier-badge tier-2">✦ 2</span></td><td class="model-list">Nemotron 3 Super 120B (1M ctx), Qwen3.5 397B, Mistral Small 4</td><td class="free-badge">Free endpoints</td></tr>
+            <tr><td class="provider-name">GitHub Models</td><td><span class="tier-badge tier-2">✦ 2</span></td><td class="model-list">GPT-5.4, Claude Sonnet 4.6, Llama 4 Scout, DeepSeek R1</td><td class="free-badge">15 RPM / 150 RPD</td></tr>
+            <tr><td class="provider-name">Pollinations AI</td><td><span class="tier-badge tier-2">✦ 2</span></td><td class="model-list">openai (GPT-5 Mini), claude-fast, deepseek, mistral, kimi, glm, minimax, perplexity + 30 more</td><td class="free-badge">Free tier + API key</td></tr>
+            <tr><td class="provider-name">xAI Grok</td><td><span class="tier-badge tier-2">✦ 2</span></td><td class="model-list">Grok-3, Grok-3-Mini, Grok-3-Fast, Grok-3-Mini-Fast (131K ctx)</td><td class="free-badge">Paid — credits</td></tr>
+            <tr><td class="provider-name">Moonshot AI (Kimi)</td><td><span class="tier-badge tier-2">✦ 2</span></td><td class="model-list">Kimi K2.5 (1T MoE, vision), Kimi K2 Thinking</td><td class="free-badge">Free credits on signup</td></tr>
+            <tr><td class="provider-name">Zhipu AI (GLM)</td><td><span class="tier-badge tier-2">✦ 2</span></td><td class="model-list">GLM-5 (744B MoE), GLM-4-Flash</td><td class="free-badge">Free tier available</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Image -->
+    <div class="ptable-wrap" id="image-tab">
+      <div class="code-block">
+        <table>
+          <thead>
+            <tr><th>Provider</th><th>Tier</th><th>Models</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="provider-name">Pollinations AI</td><td><span class="tier-badge tier-1">⭐ 1</span></td><td class="model-list">flux, zimage, klein, gptimage, wan-image, qwen-image, seedream5, gptimage-large, kontext</td><td class="free-badge">flux/zimage/klein/wan-image free</td></tr>
+            <tr><td class="provider-name">Cloudflare Workers AI</td><td><span class="tier-badge tier-1">⭐ 1</span></td><td class="model-list">FLUX.2 Klein, Flux Schnell, DreamShaper-8</td><td class="free-badge">10K neurons/day</td></tr>
+            <tr><td class="provider-name">Together AI</td><td><span class="tier-badge tier-2">✦ 2</span></td><td class="model-list">FLUX.1 Schnell Free, FLUX.1 Dev</td><td class="free-badge">Free endpoint</td></tr>
+            <tr><td class="provider-name">Hugging Face</td><td><span class="tier-badge tier-2">✦ 2</span></td><td class="model-list">FLUX.1 Schnell, SDXL</td><td class="free-badge">Rate-limited</td></tr>
+            <tr><td class="provider-name">fal.ai</td><td><span class="tier-badge tier-2">✦ 2</span></td><td class="model-list">FLUX Pro 1.1, Schnell</td><td class="free-badge">~100 free credits</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Audio -->
+    <div class="ptable-wrap" id="audio-tab">
+      <div class="code-block">
+        <table>
+          <thead>
+            <tr><th>Provider</th><th>Mode</th><th>Models / Voices</th><th>Free Limits</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="provider-name">Groq Whisper</td><td>STT</td><td class="model-list">whisper-large-v3-turbo, distil-whisper-en</td><td class="free-badge">20 RPM / 2K RPD</td></tr>
+            <tr><td class="provider-name">Groq PlayAI</td><td>TTS</td><td class="model-list">PlayAI Dialog, Arabic</td><td class="free-badge">Rate-limited</td></tr>
+            <tr><td class="provider-name">ElevenLabs</td><td>TTS</td><td class="model-list">Flash v2.5, Multilingual v2</td><td class="free-badge">10K chars/month</td></tr>
+            <tr><td class="provider-name">Deepgram</td><td>TTS + STT</td><td class="model-list">Aura-2, Nova-3</td><td class="free-badge">$200 free credit</td></tr>
+            <tr><td class="provider-name">Fish Audio</td><td>TTS</td><td class="model-list">Speech 1.6, 1.5</td><td class="free-badge">Daily limit</td></tr>
+            <tr><td class="provider-name">Pollinations AI</td><td>TTS + Music</td><td class="model-list">ElevenLabs v3 (30+ voices), ACE-Step music gen</td><td class="free-badge">elevenlabs TTS free</td></tr>
+            <tr><td class="provider-name">Pollinations AI</td><td>STT</td><td class="model-list">Whisper Large V3, Scribe v2 (90+ langs, diarization)</td><td class="free-badge">Free + API key</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Video -->
+    <div class="ptable-wrap" id="video-tab">
+      <div class="code-block">
+        <table>
+          <thead>
+            <tr><th>Provider</th><th>Models</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="provider-name">Pollinations AI</td><td class="model-list">ltx-2 (LTX-2.3 free), veo (Google Veo 3.1 Fast), wan (Wan 2.6), wan-fast (Wan 2.2), seedance, seedance-pro, nova-reel</td><td>ltx-2 free; others paid pollen credits</td></tr>
+            <tr><td class="provider-name">Replicate</td><td class="model-list">minimax/video-01, tencent/hunyuan-video</td><td>Paid credits (free trial available)</td></tr>
+            <tr><td class="provider-name">Hugging Face</td><td class="model-list">Video diffusion models</td><td>Rate-limited free tier</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Examples ── -->
+<section class="examples-section" id="examples">
+  <div class="container">
+    <div class="section-label">Examples</div>
+    <h2 class="section-title">See it in action.</h2>
+    <p class="section-sub">Copy-paste examples for every modality, in Python, TypeScript, and bash.</p>
+
+    <div class="example-tabs">
+      <button class="etab active" data-etab="ex-text">📝 Text</button>
+      <button class="etab" data-etab="ex-image">🖼️ Image</button>
+      <button class="etab" data-etab="ex-tts">🔊 TTS</button>
+      <button class="etab" data-etab="ex-stt">🎙️ STT</button>
+      <button class="etab" data-etab="ex-models">📋 Models</button>
+    </div>
+
+    <!-- Text examples -->
+    <div class="example-wrap active" id="ex-text">
+      <div style="display:grid;gap:18px">
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">python — streaming</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="code-body">
+            <pre><span class="tok-keyword">from</span> openai <span class="tok-keyword">import</span> OpenAI
+
+client = OpenAI(api_key=<span class="tok-string">"any"</span>, base_url=<span class="tok-string">"http://localhost:3000/v1"</span>)
+
+<span class="tok-comment"># Streaming response</span>
+stream = client.chat.completions.create(
+    model=<span class="tok-string">"gemini-flash"</span>,
+    messages=[{<span class="tok-string">"role"</span>: <span class="tok-string">"user"</span>, <span class="tok-string">"content"</span>: <span class="tok-string">"Write a haiku about free APIs"</span>}],
+    stream=<span class="tok-keyword">True</span>,
+)
+<span class="tok-keyword">for</span> chunk <span class="tok-keyword">in</span> stream:
+    <span class="tok-func">print</span>(chunk.choices[<span class="tok-num">0</span>].delta.content <span class="tok-keyword">or</span> <span class="tok-string">""</span>, end=<span class="tok-string">""</span>, flush=<span class="tok-keyword">True</span>)</pre>
+          </div>
+        </div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">typescript — auto-routing</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="code-body">
+            <pre><span class="tok-keyword">import</span> OpenAI <span class="tok-keyword">from</span> <span class="tok-string">"openai"</span>;
+
+<span class="tok-keyword">const</span> client = <span class="tok-keyword">new</span> OpenAI({ apiKey: <span class="tok-string">"any"</span>, baseURL: <span class="tok-string">"http://localhost:3000/v1"</span> });
+
+<span class="tok-comment">// "auto" lets LLMux pick the best available provider</span>
+<span class="tok-keyword">const</span> res = <span class="tok-keyword">await</span> client.chat.completions.create({
+  model: <span class="tok-string">"auto"</span>,
+  messages: [{ role: <span class="tok-string">"user"</span>, content: <span class="tok-string">"Explain quantum entanglement simply"</span> }],
+});
+console.log(res.choices[<span class="tok-num">0</span>].message.content);</pre>
+          </div>
+        </div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">bash — reasoning model</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="code-body">
+            <pre>curl http://localhost:3000/v1/chat/completions \
+  -H <span class="tok-string">"Content-Type: application/json"</span> \
+  -d <span class="tok-string">'{
+    "model": "deepseek-r1",
+    "messages": [{"role":"user","content":"Prove sqrt(2) is irrational"}]
+  }'</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Image examples -->
+    <div class="example-wrap" id="ex-image">
+      <div style="display:grid;gap:18px">
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">python — openai sdk</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="code-body">
+            <pre><span class="tok-keyword">from</span> openai <span class="tok-keyword">import</span> OpenAI
+
+client = OpenAI(api_key=<span class="tok-string">"any"</span>, base_url=<span class="tok-string">"http://localhost:3000/v1"</span>)
+
+img = client.images.generate(
+    prompt=<span class="tok-string">"a robot painting a masterpiece, oil on canvas, dramatic lighting"</span>,
+    model=<span class="tok-string">"pollinations-zimage"</span>,  <span class="tok-comment"># or "cf-flux-schnell", "together-flux-schnell"</span>
+    size=<span class="tok-string">"1024x1024"</span>,
+)
+<span class="tok-func">print</span>(img.data[<span class="tok-num">0</span>].url)</pre>
+          </div>
+        </div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">bash — curl</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="code-body">
+            <pre>curl http://localhost:3000/v1/images/generations \
+  -H <span class="tok-string">"Content-Type: application/json"</span> \
+  -d <span class="tok-string">'{
+    "prompt": "a cyberpunk city at sunset with neon lights",
+    "model": "pollinations-flux",
+    "size": "1024x1024",
+    "response_format": "url"
+  }'</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TTS examples -->
+    <div class="example-wrap" id="ex-tts">
+      <div style="display:grid;gap:18px">
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">python — text to speech</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="code-body">
+            <pre>client = OpenAI(api_key=<span class="tok-string">"any"</span>, base_url=<span class="tok-string">"http://localhost:3000/v1"</span>)
+
+<span class="tok-comment"># Standard TTS (Pollinations, ElevenLabs, Deepgram, Groq PlayAI)</span>
+audio = client.audio.speech.create(
+    model=<span class="tok-string">"tts-1"</span>,           <span class="tok-comment"># routes to best available TTS provider</span>
+    input=<span class="tok-string">"Welcome to LLMux, your unified AI gateway."</span>,
+    voice=<span class="tok-string">"nova"</span>,            <span class="tok-comment"># LLMux, echo, fable, onyx, nova, shimmer + 25 more</span>
+    response_format=<span class="tok-string">"mp3"</span>,
+)
+audio.stream_to_file(<span class="tok-string">"welcome.mp3"</span>)
+
+<span class="tok-comment"># Music generation via Pollinations elevenmusic</span>
+music = client.audio.speech.create(
+    model=<span class="tok-string">"pollinations-music"</span>,
+    input=<span class="tok-string">"An upbeat electronic track with synth leads"</span>,
+    voice=<span class="tok-string">"LLMux"</span>,
+)
+music.stream_to_file(<span class="tok-string">"track.mp3"</span>)</pre>
+          </div>
+        </div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">bash — curl</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="code-body">
+            <pre>curl http://localhost:3000/v1/audio/speech \
+  -H <span class="tok-string">"Content-Type: application/json"</span> \
+  -d <span class="tok-string">'{"model":"tts-1","input":"Hello from LLMux!","voice":"nova"}'</span> \
+  --output speech.mp3</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STT examples -->
+    <div class="example-wrap" id="ex-stt">
+      <div style="display:grid;gap:18px">
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">python — speech to text</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="code-body">
+            <pre>client = OpenAI(api_key=<span class="tok-string">"any"</span>, base_url=<span class="tok-string">"http://localhost:3000/v1"</span>)
+
+<span class="tok-keyword">with</span> <span class="tok-func">open</span>(<span class="tok-string">"meeting.mp3"</span>, <span class="tok-string">"rb"</span>) <span class="tok-keyword">as</span> f:
+    transcript = client.audio.transcriptions.create(
+        model=<span class="tok-string">"whisper-large-v3-turbo"</span>,  <span class="tok-comment"># Groq — fastest free STT</span>
+        file=f,
+        response_format=<span class="tok-string">"json"</span>,
+    )
+<span class="tok-func">print</span>(transcript.text)
+
+<span class="tok-comment"># 90+ language support via Pollinations Scribe</span>
+transcript = client.audio.transcriptions.create(
+    model=<span class="tok-string">"pollinations-scribe"</span>,
+    file=f,
+    language=<span class="tok-string">"fr"</span>,  <span class="tok-comment"># ISO-639-1 language code</span>
+)</pre>
+          </div>
+        </div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">bash — curl</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="code-body">
+            <pre>curl http://localhost:3000/v1/audio/transcriptions \
+  -F <span class="tok-string">"file=@audio.mp3"</span> \
+  -F <span class="tok-string">"model=whisper-large-v3-turbo"</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Models list -->
+    <div class="example-wrap" id="ex-models">
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">bash — list all models</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <div class="code-body">
+          <pre><span class="tok-comment"># List all available models with aliases</span>
+curl http://localhost:3000/v1/models | jq <span class="tok-string">'.data[].id'</span>
+
+<span class="tok-comment"># Per-provider health + rate-limit state</span>
+curl http://localhost:3000/health/providers | jq <span class="tok-string">'.'</span>
+
+<span class="tok-comment"># Gateway health</span>
+curl http://localhost:3000/health</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Multi-Key ── -->
+<section class="multikey-section" id="multi-key">
+  <div class="container">
+    <div class="section-label">Multi-Key Rotation</div>
+    <h2 class="section-title">Multiply your rate limits.<br />Zero code changes.</h2>
+    <p class="section-sub">Add multiple API keys per provider. LLMux round-robins normally and auto-rotates on 429 errors — fully transparent to your client.</p>
+
+    <div class="multikey-grid">
+      <div class="multikey-steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Create multiple free accounts</h4>
+            <p>Sign up for 2-3 accounts at Groq, Gemini, or any provider. Each gets the full free quota.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Add keys to .env</h4>
+            <p>Name them <code style="color:var(--accent3);font-family:var(--font-mono)">GROQ_API_KEY_1</code>, <code style="color:var(--accent3);font-family:var(--font-mono)">GROQ_API_KEY_2</code>, etc.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Use <code style="color:var(--accent3);font-family:var(--font-mono)">api_keys</code> in providers.yaml</h4>
+            <p>Switch from <code style="color:var(--accent3)">api_key</code> to <code style="color:var(--accent3)">api_keys</code> (plural) with the array of keys.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>Automatic rotation</h4>
+            <p>LLMux round-robins across keys, and instantly rotates to the next key on any 429 rate-limit error.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">providers.yaml</span>
+        </div>
+        <div class="code-body">
+          <pre><span class="tok-comment"># Before: single key</span>
+- id: groq-llama3-70b
+  api_key: ${GROQ_API_KEY}
+
+<span class="tok-comment"># After: 3 keys = 3× the rate limit</span>
+- id: groq-llama3-70b
+  <span class="tok-keyword">api_keys</span>:
+    - ${GROQ_API_KEY_1}   <span class="tok-comment"># 30 RPM</span>
+    - ${GROQ_API_KEY_2}   <span class="tok-comment"># 30 RPM</span>
+    - ${GROQ_API_KEY_3}   <span class="tok-comment"># 30 RPM</span>
+  <span class="tok-comment"># Result: 90 effective RPM ↑</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Routing ── -->
+<section class="routing-section" id="routing">
+  <div class="container">
+    <div class="section-label">Routing</div>
+    <h2 class="section-title">5 Strategies.<br />One Config Line.</h2>
+    <p class="section-sub">Change <code style="color:var(--accent3);font-family:var(--font-mono)">router.default_strategy</code> in providers.yaml to switch strategies instantly.</p>
+
+    <div class="routing-grid">
+      <div class="strategy-card">
+        <div class="strategy-name">priority</div>
+        <h3>Priority</h3>
+        <p>Routes to Tier 1 first, then Tier 2, etc. Ensures the highest-priority providers are used first.</p>
+        <div class="strategy-best">Best for: default, quality-first</div>
+      </div>
+      <div class="strategy-card">
+        <div class="strategy-name">round-robin</div>
+        <h3>Round-Robin</h3>
+        <p>Cycles through all available providers evenly, distributing load across the entire pool.</p>
+        <div class="strategy-best">Best for: even load distribution</div>
+      </div>
+      <div class="strategy-card">
+        <div class="strategy-name">least-busy</div>
+        <h3>Least-Busy</h3>
+        <p>Always routes to the provider with the fewest in-flight requests. Minimizes queue depth.</p>
+        <div class="strategy-best">Best for: high-concurrency workloads</div>
+      </div>
+      <div class="strategy-card">
+        <div class="strategy-name">latency-based</div>
+        <h3>Latency-Based</h3>
+        <p>Tracks rolling average latency per provider and routes to the historically fastest one.</p>
+        <div class="strategy-best">Best for: latency-sensitive apps</div>
+      </div>
+      <div class="strategy-card">
+        <div class="strategy-name">random-weighted</div>
+        <h3>Random-Weighted</h3>
+        <p>Tier-weighted random selection. Spreads load while still preferring higher-tier providers.</p>
+        <div class="strategy-best">Best for: A/B testing, load spreading</div>
+      </div>
+    </div>
+
+    <div style="margin-top:48px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:32px">
+      <div class="section-label" style="margin-bottom:12px">Provider Tiers</div>
+      <h3 style="font-size:1.15rem;font-weight:700;margin-bottom:10px">Tiers = routing priority. Not price.</h3>
+      <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:24px">Every provider gets a tier (1–4). LLMux tries Tier 1 providers first, then falls back down. There's no cost or quality implication — you can run completely free providers at Tier 1.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+        <div style="background:var(--bg3);border:1px solid rgba(74,222,128,0.2);border-radius:8px;padding:14px">
+          <div style="font-size:0.7rem;font-weight:800;color:var(--green);margin-bottom:6px">TIER 1 — HIGH PRIORITY</div>
+          <div style="font-size:0.85rem;color:var(--text-muted)">Tried first on every request. Your fastest, most reliable providers (Groq, Gemini, Cerebras).</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid rgba(96,165,250,0.2);border-radius:8px;padding:14px">
+          <div style="font-size:0.7rem;font-weight:800;color:var(--blue);margin-bottom:6px">TIER 2 — STANDARD</div>
+          <div style="font-size:0.85rem;color:var(--text-muted)">Tried after Tier 1 is busy or rate-limited. Good for secondary free providers.</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid rgba(250,204,21,0.2);border-radius:8px;padding:14px">
+          <div style="font-size:0.7rem;font-weight:800;color:var(--yellow);margin-bottom:6px">TIER 3 — FALLBACK</div>
+          <div style="font-size:0.85rem;color:var(--text-muted)">Used when higher tiers are all busy or failing. Good for slower, uncapped providers.</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid rgba(248,113,113,0.2);border-radius:8px;padding:14px">
+          <div style="font-size:0.7rem;font-weight:800;color:#f87171;margin-bottom:6px">TIER 4 — LAST RESORT</div>
+          <div style="font-size:0.85rem;color:var(--text-muted)">Emergency fallback only. For experimental or rarely-available providers.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:60px">
+      <div class="section-label">Fallback</div>
+      <h3 style="font-size:1.4rem;font-weight:700;margin-bottom:20px">Automatic 3-Level Fallback</h3>
+      <p style="color:var(--text-muted);margin-bottom:32px">When a provider fails, LLMux silently tries the next option. Your client sees a successful response — nothing else.</p>
+
+      <div class="fallback-flow">
+        <div class="flow-col">
+          <div class="flow-box">Primary Provider</div>
+          <div class="flow-label">Tier 1, best match</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-col">
+          <div class="flow-box" style="border-color:var(--orange);color:var(--orange)">Rate limited?</div>
+          <div class="flow-label">429 / timeout</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-col">
+          <div class="flow-box">Same Model<br/>Alt Provider</div>
+          <div class="flow-label">Retry max_retries</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-col">
+          <div class="flow-box">Any Compatible<br/>Provider</div>
+          <div class="flow-label">Same modality</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-col">
+          <div class="flow-box" style="border-color:var(--green);color:var(--green)">✓ Response</div>
+          <div class="flow-label">Client gets answer</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Deploy ── -->
+<section class="deploy-section" id="deploy">
+  <div class="container">
+    <div class="section-label">Deployment</div>
+    <h2 class="section-title">Deploy anywhere.<br />In minutes.</h2>
+    <p class="section-sub">LLMux is a standard Node.js app. Deploy it anywhere you can run containers or Node.</p>
+
+    <div class="deploy-grid">
+      <div class="deploy-card">
+        <h3>🐳 Docker</h3>
+        <p>The recommended way. Full control, Redis included via Compose.</p>
+        <div class="code-block" style="font-size:0.77rem">
+          <div class="code-body" style="padding:12px">
+            <pre>docker build -t LLMux-gateway .
+docker run -p 3000:3000 \
+  --env-file .env \
+  -v $(pwd)/config:/app/config \
+  LLMux-gateway</pre>
+          </div>
+        </div>
+      </div>
+      <div class="deploy-card">
+        <h3>🚂 Railway</h3>
+        <p>One-click deploy. Set API keys as env vars, done.</p>
+        <div class="code-block" style="font-size:0.77rem">
+          <div class="code-body" style="padding:12px">
+            <pre><span class="tok-comment"># railway.toml already configured</span>
+railway up
+
+<span class="tok-comment"># Set env vars in Railway dashboard</span></pre>
+          </div>
+        </div>
+      </div>
+      <div class="deploy-card">
+        <h3>▲ Vercel Edge</h3>
+        <p>Global edge deployment. Sub-20ms latency from any region.</p>
+        <div class="code-block" style="font-size:0.77rem">
+          <div class="code-body" style="padding:12px">
+            <pre><span class="tok-comment"># vercel.json already configured</span>
+vercel deploy --prod</pre>
+          </div>
+        </div>
+      </div>
+      <div class="deploy-card">
+        <h3>🖥️ Self-hosted VPS</h3>
+        <p>Full control. Use with PM2 or systemd for production stability.</p>
+        <div class="code-block" style="font-size:0.77rem">
+          <div class="code-body" style="padding:12px">
+            <pre>pnpm build
+pm2 start dist/index.js \
+  --name LLMux-gateway</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Add Provider ── -->
+<section class="addprovider-section" id="add-provider">
+  <div class="container">
+    <div class="section-label">Extensibility</div>
+    <h2 class="section-title">Add any provider<br />in 4 steps.</h2>
+    <p class="section-sub" style="margin-bottom:50px">LLMux's plugin architecture makes adding new providers simple. If it has an API, it can be a provider.</p>
+
+    <div class="steps-numbered">
+      <div class="big-step">
+        <div class="big-step-num">1</div>
+        <div class="big-step-content">
+          <h3>Create the provider class</h3>
+          <div class="code-block">
+            <div class="code-header">
+              <span class="code-lang">src/providers/text/myprovider.ts</span>
+              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+            </div>
+            <div class="code-body">
+              <pre><span class="tok-keyword">import</span> { BaseProvider } <span class="tok-keyword">from</span> <span class="tok-string">"../base.js"</span>;
+
+<span class="tok-keyword">export class</span> <span class="tok-type">MyProvider</span> <span class="tok-keyword">extends</span> <span class="tok-type">BaseProvider</span> {
+  <span class="tok-keyword">async</span> <span class="tok-func">chatCompletion</span>(req, ctx) {
+    <span class="tok-keyword">const</span> model = <span class="tok-keyword">this</span>.<span class="tok-func">resolveModel</span>(req.model);
+    <span class="tok-keyword">const</span> res = <span class="tok-keyword">await this</span>.<span class="tok-func">postJSON</span>(
+      <span class="tok-string">`${this.config.baseUrl}/chat/completions`</span>,
+      { ...req, model }, ctx
+    );
+    <span class="tok-keyword">if</span> (req.stream) <span class="tok-keyword">return this</span>.<span class="tok-func">proxyStream</span>(res, ctx);
+    <span class="tok-keyword">const</span> data = <span class="tok-keyword">await</span> res.<span class="tok-func">json</span>();
+    <span class="tok-comment">// recordTokens updates rate-limit tracker AND dashboard stats</span>
+    <span class="tok-keyword">await this</span>.<span class="tok-func">recordTokens</span>(ctx, data.usage?.total_tokens ?? <span class="tok-num">0</span>);
+    <span class="tok-keyword">return new</span> <span class="tok-type">Response</span>(<span class="tok-type">JSON</span>.<span class="tok-func">stringify</span>(data), {
+      headers: { <span class="tok-string">"Content-Type"</span>: <span class="tok-string">"application/json"</span> }
+    });
+  }
+}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="big-step">
+        <div class="big-step-num">2</div>
+        <div class="big-step-content">
+          <h3>Register in registry.ts</h3>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">src/providers/registry.ts</span></div>
+            <div class="code-body">
+              <pre><span class="tok-keyword">import</span> { MyProvider } <span class="tok-keyword">from</span> <span class="tok-string">"./text/myprovider.js"</span>;
+
+<span class="tok-keyword">const</span> PROVIDER_FACTORIES = {
+  <span class="tok-comment">// existing providers...</span>
+  <span class="tok-string">"my-provider-id"</span>: MyProvider,  <span class="tok-comment">// must match id in providers.yaml</span>
+};</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="big-step">
+        <div class="big-step-num">3</div>
+        <div class="big-step-content">
+          <h3>Add to providers.yaml</h3>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">config/providers.yaml</span></div>
+            <div class="code-body">
+              <pre>- id: my-provider-id
+  name: My Provider
+  modality: text
+  tier: <span class="tok-num">2</span>
+  enabled: <span class="tok-keyword">true</span>
+  requires_auth: <span class="tok-keyword">true</span>
+  api_keys:                    <span class="tok-comment"># multi-key support built-in</span>
+    - ${MY_PROVIDER_KEY_1}
+    - ${MY_PROVIDER_KEY_2}
+  base_url: https://api.myprovider.com/v1
+  adapter: openai
+  models:
+    - id: my-model-large
+      alias: my-large
+      context_window: <span class="tok-num">128000</span>
+  limits:
+    rpm: <span class="tok-num">60</span>
+  concurrency: <span class="tok-num">5</span>
+  timeout: <span class="tok-num">30000</span>
+  max_retries: <span class="tok-num">2</span></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="big-step">
+        <div class="big-step-num">4</div>
+        <div class="big-step-content">
+          <h3>Add API key to .env and restart</h3>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">.env</span></div>
+            <div class="code-body">
+              <pre>MY_PROVIDER_KEY_1=your-key-here
+MY_PROVIDER_KEY_2=optional-second-key</pre>
+            </div>
+          </div>
+          <div class="alert" style="margin-top:12px">
+            <strong>That's it.</strong> LLMux auto-discovers the provider on startup. No restarts needed in dev mode (hot reload via <code>pnpm dev</code>).
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section class="cta-section">
+  <div class="container">
+    <h2>Ready to unify your AI stack?</h2>
+    <p>Clone, configure, deploy. Three commands to a production AI gateway that never goes down.</p>
+    <div class="cta-actions">
+      <a class="btn btn-primary" href="https://github.com/your-org/LLMux-llm-gateway">⭐ Get Started on GitHub</a>
+      <a class="btn btn-outline" href="https://github.com/your-org/LLMux-llm-gateway/blob/main/README.md">📖 Read the Docs</a>
+    </div>
+    <div style="margin-top:40px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;max-width:500px;margin-left:auto;margin-right:auto;text-align:left">
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:12px;font-weight:600">🚀 3-COMMAND QUICKSTART</div>
+      <pre style="font-size:0.82rem;font-family:var(--font-mono)">git clone https://github.com/your-org/LLMux-llm-gateway
+cd LLMux-llm-gateway &amp;&amp; pnpm install
+cp config/providers.yaml.example config/providers.yaml
+<span style="color:var(--text-muted)"># add your API keys...</span>
+pnpm dev</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">⚡ LLMux</div>
+    <div class="footer-links">
+      <a href="https://github.com/your-org/LLMux-llm-gateway">GitHub</a>
+      <a href="https://github.com/your-org/LLMux-llm-gateway/blob/main/README.md">Docs</a>
+      <a href="https://github.com/your-org/LLMux-llm-gateway/blob/main/CONTRIBUTING.md">Contributing</a>
+      <a href="https://github.com/your-org/LLMux-llm-gateway/issues">Issues</a>
+      <a href="https://github.com/your-org/LLMux-llm-gateway/blob/main/LICENSE">MIT License</a>
+    </div>
+    <div class="footer-copy">Built with ⚡ — Every free token counts.</div>
+  </div>
+</footer>
+
+<script>
+  // ── Tab switchers ──
+  function makeTabSwitcher(tabSelector, panelSelector, activeClass) {
+    document.querySelectorAll(tabSelector).forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.tab || btn.dataset.ptab || btn.dataset.etab;
+        document.querySelectorAll(tabSelector).forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll(panelSelector).forEach(p => p.classList.remove('active'));
+        const el = document.getElementById(target);
+        if (el) el.classList.add('active');
+      });
+    });
+  }
+
+  makeTabSwitcher('[data-tab]', '.code-panel');
+  makeTabSwitcher('[data-ptab]', '.ptable-wrap');
+  makeTabSwitcher('[data-etab]', '.example-wrap');
+
+  // ── Copy button ──
+  function copyCode(btn) {
+    const code = btn.closest('.code-block').querySelector('pre');
+    if (!code) return;
+    const text = code.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      btn.style.background = 'var(--green)';
+      btn.style.color = '#000';
+      setTimeout(() => { btn.textContent = orig; btn.style.background = ''; btn.style.color = ''; }, 1800);
+    });
+  }
+
+  // ── Smooth active nav ──
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-links a');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const link = document.querySelector(`.nav-links a[href="#${e.target.id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

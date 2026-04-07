@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Playground — LLMux</title>
+  <style>
+    /* ── Light theme (default) ── */
+    :root {
+      --bg: #f6f8fa;
+      --bg2: #ffffff;
+      --bg3: #f0f2f5;
+      --surface: #ffffff;
+      --border: #d0d7de;
+      --border2: #c8d0d8;
+      --text: #1f2328;
+      --text-muted: #57606a;
+      --text-placeholder: #8c959f;
+      --accent: #0550ae;
+      --accent2: #0969da;
+      --accent-hover: #0860ca;
+      --green: #1a7f37;
+      --red: #cf222e;
+      --yellow: #9a6700;
+      --orange: #bc4c00;
+      --user-bubble-bg: #0969da;
+      --user-bubble-text: #ffffff;
+      --assistant-bubble-bg: #ffffff;
+      --assistant-bubble-border: #d0d7de;
+      --code-bg: #f6f8fa;
+      --input-bg: #ffffff;
+      --nav-bg: #ffffff;
+      --nav-shadow: 0 1px 0 var(--border);
+      --sidebar-bg: #ffffff;
+      --card-shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+      --mono: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
+      --r: 8px;
+    }
+    /* ── Dark theme ── */
+    html[data-theme="dark"] {
+      --bg: #0d0d12;
+      --bg2: #111118;
+      --bg3: #16161f;
+      --surface: #1a1a24;
+      --border: #1e1e2e;
+      --border2: #2a2a3e;
+      --text: #e2e2f0;
+      --text-muted: #6e6e88;
+      --text-placeholder: #4a4a62;
+      --accent: #7c6afb;
+      --accent2: #a78bfa;
+      --accent-hover: #8b7afc;
+      --green: #4ade80;
+      --red: #f87171;
+      --yellow: #facc15;
+      --orange: #fb923c;
+      --user-bubble-bg: #7c6afb;
+      --user-bubble-text: #ffffff;
+      --assistant-bubble-bg: #1a1a24;
+      --assistant-bubble-border: #1e1e2e;
+      --code-bg: #111118;
+      --input-bg: #111118;
+      --nav-bg: #111118;
+      --nav-shadow: 0 1px 0 var(--border);
+      --sidebar-bg: #111118;
+      --card-shadow: 0 1px 3px rgba(0,0,0,.3);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; font-size: 14px; display: flex; flex-direction: column; transition: background .2s, color .2s; }
+
+    /* ── Nav ── */
+    nav.topnav {
+      background: var(--nav-bg); border-bottom: 1px solid var(--border);
+      box-shadow: var(--nav-shadow);
+      padding: 0 20px; height: 52px; display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+    }
+    .brand { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text); font-weight: 700; font-size: .95rem; margin-right: 12px; }
+    .brand-icon { width: 28px; height: 28px; background: var(--accent); border-radius: 7px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: .85rem; }
+    .nav-link { text-decoration: none; color: var(--text-muted); font-size: .82rem; font-weight: 500; padding: 5px 10px; border-radius: 6px; transition: background .12s, color .12s; }
+    .nav-link:hover { background: var(--bg3); color: var(--text); }
+    .nav-link.active { background: var(--bg3); color: var(--text); font-weight: 600; }
+    .spacer { flex: 1; }
+    .theme-toggle { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; width: 34px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; transition: border-color .15s; flex-shrink: 0; }
+    .theme-toggle:hover { border-color: var(--accent2); }
+    .theme-toggle .icon-sun { display: block; }
+    .theme-toggle .icon-moon { display: none; }
+    html[data-theme="dark"] .theme-toggle .icon-sun { display: none; }
+    html[data-theme="dark"] .theme-toggle .icon-moon { display: block; }
+    .user-badge { font-size: .8rem; color: var(--text-muted); padding: 4px 10px; }
+    .logout-btn { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text-muted); font-size: .78rem; padding: 4px 10px; cursor: pointer; transition: border-color .15s, color .15s; }
+    .logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── Layout ── */
+    .layout { display: flex; flex: 1; min-height: 0; }
+
+    /* ── Left sidebar ── */
+    .sidebar {
+      width: 300px; flex-shrink: 0; background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; overflow-y: auto;
+    }
+    .sidebar-section { padding: 16px; border-bottom: 1px solid var(--border); }
+    .sidebar-section:last-child { border-bottom: none; }
+    .sidebar-title { font-size: .7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
+
+    label { display: block; font-size: .78rem; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+    select, input[type="number"], input[type="text"], textarea {
+      width: 100%; background: var(--input-bg); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); font-size: .82rem; padding: 7px 10px;
+      outline: none; transition: border-color .15s;
+      font-family: inherit;
+    }
+    select:focus, input[type="number"]:focus, input[type="text"]:focus, textarea:focus { border-color: var(--accent2); }
+    select option { background: var(--surface); color: var(--text); }
+
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type="range"] { flex: 1; accent-color: var(--accent2); }
+    .range-row input[type="number"] { width: 58px; flex-shrink: 0; }
+    .range-row input[type="number"]::-webkit-inner-spin-button { opacity: .7; }
+
+    .form-row { margin-bottom: 12px; }
+    .form-row:last-child { margin-bottom: 0; }
+
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+    .toggle-label { font-size: .78rem; font-weight: 600; color: var(--text); }
+    .toggle-switch { position: relative; width: 38px; height: 20px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; inset: 0; background: var(--border2); border-radius: 10px; cursor: pointer; transition: background .2s; }
+    .toggle-slider::before { content: ''; position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .2s; }
+    .toggle-switch input:checked + .toggle-slider { background: var(--accent2); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+    .system-prompt-area { resize: vertical; min-height: 80px; max-height: 200px; font-family: var(--mono); font-size: .75rem; line-height: 1.5; }
+
+    .btn { border: none; border-radius: 6px; cursor: pointer; font-size: .82rem; font-weight: 600; padding: 7px 14px; transition: opacity .15s; }
+    .btn-primary { background: var(--accent2); color: #fff; }
+    .btn-primary:hover { opacity: .88; }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-ghost { background: none; border: 1px solid var(--border); color: var(--text-muted); }
+    .btn-ghost:hover { border-color: var(--border2); color: var(--text); }
+    .btn-danger { background: none; border: 1px solid var(--border); color: var(--red); font-size: .75rem; padding: 4px 10px; }
+    .btn-danger:hover { background: rgba(207,34,46,.06); }
+
+    .sidebar-actions { display: flex; gap: 8px; padding: 12px 16px; }
+
+    /* ── Chat area ── */
+    .chat-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; }
+
+    /* empty state */
+    .chat-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--text-muted); }
+    .chat-empty-icon { font-size: 2.5rem; opacity: .4; }
+    .chat-empty-title { font-size: 1rem; font-weight: 700; color: var(--text); }
+    .chat-empty-sub { font-size: .82rem; text-align: center; max-width: 360px; line-height: 1.5; }
+
+    /* message bubbles */
+    .msg { display: flex; gap: 10px; max-width: 860px; }
+    .msg.user { flex-direction: row-reverse; margin-left: auto; }
+    .msg-avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; flex-shrink: 0; margin-top: 2px; }
+    .msg.user .msg-avatar { background: var(--accent2); color: #fff; }
+    .msg.assistant .msg-avatar { background: var(--bg3); border: 1px solid var(--border); color: var(--text-muted); }
+    .msg-body { display: flex; flex-direction: column; gap: 4px; max-width: calc(100% - 42px); }
+    .msg-meta { font-size: .68rem; color: var(--text-muted); display: flex; gap: 8px; align-items: center; }
+    .msg.user .msg-meta { justify-content: flex-end; }
+    .msg-bubble {
+      padding: 10px 14px; border-radius: 10px; line-height: 1.6; font-size: .85rem;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .msg.user .msg-bubble { background: var(--user-bubble-bg); color: var(--user-bubble-text); border-bottom-right-radius: 3px; }
+    .msg.assistant .msg-bubble { background: var(--assistant-bubble-bg); border: 1px solid var(--assistant-bubble-border); border-bottom-left-radius: 3px; box-shadow: var(--card-shadow); }
+    .msg-bubble code { font-family: var(--mono); font-size: .8em; background: var(--code-bg); border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; }
+    .msg-bubble pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; overflow-x: auto; margin: 6px 0; }
+    .msg-bubble pre code { background: none; border: none; padding: 0; font-size: .78rem; line-height: 1.5; }
+
+    /* typing indicator */
+    .typing-indicator .msg-bubble { display: flex; align-items: center; gap: 5px; min-width: 52px; }
+    .typing-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); animation: typing 1.2s infinite; }
+    .typing-dot:nth-child(2) { animation-delay: .2s; }
+    .typing-dot:nth-child(3) { animation-delay: .4s; }
+    @keyframes typing { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
+
+    /* error bubble */
+    .msg-error .msg-bubble { background: rgba(207,34,46,.07); border: 1px solid rgba(207,34,46,.2); color: var(--red); }
+    html[data-theme="dark"] .msg-error .msg-bubble { background: rgba(248,113,113,.07); border-color: rgba(248,113,113,.2); }
+
+    /* ── Input bar ── */
+    .input-bar {
+      border-top: 1px solid var(--border); background: var(--surface);
+      padding: 14px 20px; display: flex; gap: 10px; align-items: flex-end;
+    }
+    .input-wrap { flex: 1; position: relative; }
+    .msg-input {
+      width: 100%; resize: none; background: var(--input-bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 44px 10px 14px; font-size: .88rem;
+      color: var(--text); font-family: inherit; line-height: 1.5; outline: none;
+      transition: border-color .15s; max-height: 180px; overflow-y: auto;
+    }
+    .msg-input:focus { border-color: var(--accent2); }
+    .msg-input::placeholder { color: var(--text-placeholder); }
+    .send-btn {
+      position: absolute; right: 8px; bottom: 8px;
+      width: 30px; height: 30px; border-radius: 7px;
+      background: var(--accent2); border: none; color: #fff; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: .9rem;
+      transition: opacity .15s;
+    }
+    .send-btn:hover { opacity: .88; }
+    .send-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .input-hint { font-size: .7rem; color: var(--text-muted); text-align: center; padding: 0 0 2px; }
+
+    /* ── Status bar ── */
+    .status-bar {
+      font-size: .72rem; color: var(--text-muted); padding: 6px 20px;
+      border-top: 1px solid var(--border); background: var(--bg3);
+      display: flex; gap: 16px; align-items: center;
+    }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
+    .status-dot.ok { background: var(--green); }
+    .status-dot.err { background: var(--red); }
+    .status-item { display: flex; align-items: center; gap: 5px; }
+
+    /* ── Badge ── */
+    .badge { font-size: .65rem; font-weight: 700; padding: 1px 6px; border-radius: 10px; text-transform: uppercase; letter-spacing: .04em; }
+    .badge-blue { background: rgba(9,105,218,.1); color: var(--accent2); }
+    html[data-theme="dark"] .badge-blue { background: rgba(124,106,251,.15); color: var(--accent2); }
+    .badge-green { background: rgba(26,127,55,.1); color: var(--green); }
+    html[data-theme="dark"] .badge-green { background: rgba(74,222,128,.1); color: var(--green); }
+
+    /* ── Loading overlay ── */
+    #loading { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 999; }
+    #loading.hidden { display: none; }
+
+    /* ── Toast ── */
+    .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast-msg { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: .8rem; color: var(--text); box-shadow: 0 4px 16px rgba(0,0,0,.12); animation: slideIn .2s ease; pointer-events: auto; }
+    .toast-msg.error { border-color: rgba(207,34,46,.3); color: var(--red); }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .sidebar { width: 260px; }
+    }
+
+    /* ── Code panel ── */
+    .main-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); background: var(--bg3); flex-shrink: 0; padding: 0 16px; }
+    html[data-theme="dark"] .main-tabs { background: transparent; }
+    .main-tab { font-size: .78rem; font-weight: 600; padding: 10px 16px; cursor: pointer; border: none; background: none; color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color .15s, border-color .15s; }
+    .main-tab:hover { color: var(--text); }
+    .main-tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+    .main-panel { display: none; flex: 1; flex-direction: column; min-height: 0; }
+    .main-panel.active { display: flex; }
+
+    .code-panel { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+    .code-lang-tabs { display: flex; gap: 6px; padding: 12px 16px 0; flex-shrink: 0; }
+    .code-lang-tab { font-size: .72rem; font-weight: 700; padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border); background: none; cursor: pointer; color: var(--text-muted); transition: background .12s, color .12s, border-color .12s; }
+    .code-lang-tab:hover { border-color: var(--accent2); color: var(--accent2); }
+    .code-lang-tab.active { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+    .code-block-wrap { flex: 1; overflow-y: auto; padding: 12px 16px 16px; }
+    .code-block-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .code-block-label { font-size: .7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+    .copy-btn { font-size: .72rem; font-weight: 600; padding: 3px 10px; border-radius: 5px; border: 1px solid var(--border); background: none; color: var(--text-muted); cursor: pointer; transition: border-color .12s, color .12s; }
+    .copy-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+    .copy-btn.copied { border-color: var(--green); color: var(--green); }
+    pre.code-snippet { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-family: var(--mono); font-size: .78rem; line-height: 1.65; color: var(--text); white-space: pre; overflow-x: auto; margin: 0; }
+    .code-no-selection { display: flex; align-items: center; justify-content: center; height: 200px; color: var(--text-muted); font-size: .82rem; flex-direction: column; gap: 8px; }
+    .code-no-selection-icon { font-size: 1.8rem; opacity: .3; }
+
+    /* ── Markdown prose inside assistant bubbles ── */
+    .msg-bubble.md-content { line-height: 1.65; }
+    .msg-bubble.md-content p { margin: 0 0 .6em; }
+    .msg-bubble.md-content p:last-child { margin-bottom: 0; }
+    .msg-bubble.md-content h1,.msg-bubble.md-content h2,.msg-bubble.md-content h3,
+    .msg-bubble.md-content h4 { margin: .8em 0 .35em; font-weight: 700; line-height: 1.3; }
+    .msg-bubble.md-content h1 { font-size: 1.2em; }
+    .msg-bubble.md-content h2 { font-size: 1.08em; }
+    .msg-bubble.md-content h3 { font-size: .97em; }
+    .msg-bubble.md-content ul,.msg-bubble.md-content ol { margin: .35em 0 .6em 1.4em; padding: 0; }
+    .msg-bubble.md-content li { margin-bottom: .2em; }
+    .msg-bubble.md-content code { font-family: var(--mono); font-size: .82em; background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px; padding: .1em .35em; }
+    .msg-bubble.md-content pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: .75em 1em; overflow-x: auto; margin: .5em 0; position: relative; }
+    .msg-bubble.md-content pre code { background: none; border: none; padding: 0; font-size: .8em; line-height: 1.6; }
+    .msg-bubble.md-content blockquote { border-left: 3px solid var(--accent); margin: .5em 0; padding: .25em .75em; color: var(--text-muted); background: var(--bg-hover); border-radius: 0 4px 4px 0; }
+    .msg-bubble.md-content table { border-collapse: collapse; width: 100%; margin: .5em 0; font-size: .85em; }
+    .msg-bubble.md-content th,.msg-bubble.md-content td { border: 1px solid var(--border); padding: .35em .65em; text-align: left; }
+    .msg-bubble.md-content th { background: var(--bg-hover); font-weight: 600; }
+    .msg-bubble.md-content hr { border: none; border-top: 1px solid var(--border); margin: .75em 0; }
+    .msg-bubble.md-content a { color: var(--accent2); text-decoration: none; }
+    .msg-bubble.md-content a:hover { text-decoration: underline; }
+    /* Inline code-copy button that appears on pre hover */
+    .pre-copy-btn { position: absolute; top: 6px; right: 6px; font-size: .7rem; padding: 2px 7px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; color: var(--text-muted); opacity: 0; transition: opacity .15s; }
+    .msg-bubble.md-content pre:hover .pre-copy-btn { opacity: 1; }
+    .pre-copy-btn.copied { color: var(--green); border-color: var(--green); }
+    /* streaming cursor */
+    .stream-cursor::after { content: '▍'; animation: blink .7s step-start infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/marked@13/marked.min.js"></script>
+</head>
+<body>
+  <div id="loading">
+    <div style="text-align:center;color:var(--text-muted);font-size:.9rem">Loading providers…</div>
+  </div>
+
+  <nav class="topnav">
+    <a href="/dashboard" class="brand"><div class="brand-icon">L</div>LLMux</a>
+    <a href="/dashboard" class="nav-link">Dashboard</a>
+    <a href="/playground" class="nav-link active">Playground</a>
+    <a href="/settings" class="nav-link">Settings</a>
+    <div class="spacer"></div>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+      <span class="icon-sun">☀️</span><span class="icon-moon">🌙</span>
+    </button>
+    <div class="user-badge">👤 <span id="adminName">admin</span></div>
+    <button class="logout-btn" onclick="logout()">Sign out</button>
+  </nav>
+
+  <div class="layout">
+    <!-- ── Sidebar: config ── -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">Provider & Model</div>
+        <div class="form-row">
+          <label for="providerSelect">Provider</label>
+          <select id="providerSelect" onchange="onProviderChange()">
+            <option value="">— select provider —</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="modelSelect">Model</label>
+          <select id="modelSelect">
+            <option value="">— select model —</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">System Prompt</div>
+        <textarea id="systemPrompt" class="system-prompt-area" placeholder="You are a helpful assistant."></textarea>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Parameters</div>
+        <div class="form-row">
+          <label>Temperature</label>
+          <div class="range-row">
+            <input type="range" id="tempRange" min="0" max="2" step="0.01" value="0.7" oninput="syncNum('tempRange','tempNum')">
+            <input type="number" id="tempNum" min="0" max="2" step="0.01" value="0.7" oninput="syncRange('tempNum','tempRange')">
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Max Tokens</label>
+          <input type="number" id="maxTokens" min="1" max="128000" step="1" value="2048" placeholder="2048">
+        </div>
+        <div class="form-row">
+          <label>Top P</label>
+          <div class="range-row">
+            <input type="range" id="topPRange" min="0" max="1" step="0.01" value="1" oninput="syncNum('topPRange','topPNum')">
+            <input type="number" id="topPNum" min="0" max="1" step="0.01" value="1" oninput="syncRange('topPNum','topPRange')">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="toggle-row">
+            <span class="toggle-label">Streaming</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="streamToggle" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-actions">
+        <button class="btn btn-danger" onclick="clearChat()">Clear chat</button>
+      </div>
+    </aside>
+
+    <!-- ── Main: tabbed area ── -->
+    <div class="chat-area">
+      <!-- Tab switcher -->
+      <div class="main-tabs">
+        <button class="main-tab active" onclick="switchMainTab('chat', this)">💬 Chat</button>
+        <button class="main-tab" onclick="switchMainTab('code', this)">📋 Code</button>
+      </div>
+
+      <!-- Chat panel -->
+      <div class="main-panel active" id="panel-chat">
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-empty" id="chatEmpty">
+            <div class="chat-empty-icon">🧪</div>
+            <div class="chat-empty-title">LLMux Playground</div>
+            <div class="chat-empty-sub">Select a provider and model from the sidebar, then send a message to start testing.</div>
+          </div>
+        </div>
+
+        <div class="input-bar">
+          <div class="input-wrap">
+            <textarea
+              id="msgInput"
+              class="msg-input"
+              rows="1"
+              placeholder="Type a message… (Enter to send, Shift+Enter for newline)"
+              onkeydown="handleInputKey(event)"
+              oninput="autoResize(this)"
+            ></textarea>
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Send">&#9658;</button>
+          </div>
+        </div>
+        <div class="input-hint" id="inputHint">Select a provider and model to begin</div>
+
+        <div class="status-bar">
+          <div class="status-item">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Not connected</span>
+          </div>
+          <div class="status-item" id="lastLatency" style="display:none">
+            ⚡ <span id="latencyVal">—</span>ms
+          </div>
+          <div class="status-item" id="lastTokens" style="display:none">
+            🔢 <span id="tokensVal">—</span> tokens
+          </div>
+          <div id="lastProvider" style="display:none" class="status-item">
+            via <span id="providerVal" class="badge badge-blue"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Code panel -->
+      <div class="main-panel" id="panel-code">
+        <div class="code-panel">
+          <div class="code-lang-tabs">
+            <button class="code-lang-tab active" onclick="switchLang('curl', this)">cURL</button>
+            <button class="code-lang-tab" onclick="switchLang('python', this)">Python</button>
+            <button class="code-lang-tab" onclick="switchLang('typescript', this)">TypeScript</button>
+          </div>
+          <div class="code-block-wrap">
+            <div id="codeNoSelection" class="code-no-selection">
+              <div class="code-no-selection-icon">📋</div>
+              <div>Select a provider and model to generate code</div>
+            </div>
+            <div id="codeContent" style="display:none">
+              <div class="code-block-header">
+                <span class="code-block-label" id="codeLangLabel">cURL</span>
+                <button class="copy-btn" id="copyBtn" onclick="copyCode()">Copy</button>
+              </div>
+              <pre class="code-snippet" id="codeSnippet"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+  // ── Theme ─────────────────────────────────────────────────────────────────
+  function initTheme() {
+    if (localStorage.getItem('llmux_theme') === 'dark')
+      document.documentElement.setAttribute('data-theme', 'dark');
+    else
+      document.documentElement.removeAttribute('data-theme');
+  }
+  function toggleTheme() {
+    const isDark = document.documentElement.hasAttribute('data-theme');
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('llmux_theme', 'light');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('llmux_theme', 'dark');
+    }
+  }
+  initTheme();
+
+  // ── Auth ──────────────────────────────────────────────────────────────────
+  const TOKEN = localStorage.getItem('llmux_token') ?? '';
+
+  async function authFetch(url, opts = {}) {
+    const headers = { 'Content-Type': 'application/json', ...opts.headers };
+    if (TOKEN) headers['Authorization'] = `Bearer ${TOKEN}`;
+    const res = await fetch(url, { ...opts, headers, credentials: 'include' });
+    if (res.status === 401) { window.location.href = '/login?returnTo=/playground'; return res; }
+    return res;
+  }
+
+  async function logout() {
+    await fetch('/api/admin/logout', { method: 'POST', credentials: 'include' });
+    localStorage.removeItem('llmux_token');
+    window.location.href = '/login';
+  }
+
+  // ── State ─────────────────────────────────────────────────────────────────
+  let providers = [];
+  let messages = [];   // { role: 'user'|'assistant'|'system', content: string }
+  let isGenerating = false;
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  (async () => {
+    if (!TOKEN) { window.location.href = '/login?returnTo=/playground'; return; }
+    try {
+      const r = await authFetch('/api/admin/me');
+      if (!r.ok) { window.location.href = '/login?returnTo=/playground'; return; }
+      const me = await r.json();
+      document.getElementById('adminName').textContent = me.username;
+    } catch { window.location.href = '/login?returnTo=/playground'; return; }
+
+    await loadProviders();
+    document.getElementById('loading').classList.add('hidden');
+  })();
+
+  async function loadProviders() {
+    try {
+      const r = await authFetch('/api/admin/providers');
+      if (!r.ok) throw new Error('Failed to load providers');
+      const data = await r.json();
+      const all = data.providers ?? [];
+      // Text modality providers that have at least one API key configured
+      providers = all.filter(p => p.modality === 'text' && p.apiKeys && p.apiKeys.length > 0);
+      populateProviderSelect();
+    } catch (e) {
+      toast('Could not load providers: ' + e.message, 'error');
+    }
+  }
+
+  function populateProviderSelect() {
+    const sel = document.getElementById('providerSelect');
+    sel.innerHTML = '<option value="">— select provider —</option>';
+    if (!providers.length) {
+      sel.innerHTML += '<option value="" disabled>No text providers with API keys configured</option>';
+      return;
+    }
+    providers.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.name + (p.enabled ? '' : ' (disabled)');
+      sel.appendChild(opt);
+    });
+  }
+
+  function onProviderChange() {
+    const id = document.getElementById('providerSelect').value;
+    const modelSel = document.getElementById('modelSelect');
+    modelSel.innerHTML = '<option value="">— select model —</option>';
+    if (!id) { updateStatus(); refreshCode(); return; }
+
+    const provider = providers.find(p => p.id === id);
+    if (!provider || !provider.models) { updateStatus(); refreshCode(); return; }
+
+    provider.models.forEach(m => {
+      const opt = document.createElement('option');
+      const alias = m.alias || m.id;
+      opt.value = m.id;   // always send the real model ID to the API
+      opt.dataset.alias = alias; // keep alias for status display
+      opt.textContent = alias + (m.alias && m.alias !== m.id ? ` (${m.id})` : '');
+      modelSel.appendChild(opt);
+    });
+    if (provider.models.length > 0) modelSel.selectedIndex = 1;
+    updateStatus();
+    refreshCode();
+  }
+
+  // ── Parameter sync ────────────────────────────────────────────────────────
+  function syncNum(rangeId, numId) {
+    document.getElementById(numId).value = document.getElementById(rangeId).value;
+  }
+  function syncRange(numId, rangeId) {
+    document.getElementById(rangeId).value = document.getElementById(numId).value;
+  }
+
+  // ── UI helpers ────────────────────────────────────────────────────────────
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 180) + 'px';
+  }
+
+  function handleInputKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }
+
+  function updateStatus() {
+    const pid = document.getElementById('providerSelect').value;
+    const mid = document.getElementById('modelSelect').value;
+    const dot = document.getElementById('statusDot');
+    const text = document.getElementById('statusText');
+    const hint = document.getElementById('inputHint');
+    const sendBtn = document.getElementById('sendBtn');
+
+    if (pid && mid) {
+      const prov = providers.find(p => p.id === pid);
+      const provLabel = prov ? prov.name : pid;
+      // Show alias (friendly name) instead of raw model ID
+      const modelSel = document.getElementById('modelSelect');
+      const selOpt = modelSel.options[modelSel.selectedIndex];
+      const modelLabel = selOpt?.dataset?.alias || mid;
+      dot.className = 'status-dot ok';
+      text.textContent = `${provLabel} / ${modelLabel}`;
+      hint.textContent = 'Enter to send · Shift+Enter for newline';
+      sendBtn.disabled = false;
+    } else {
+      dot.className = 'status-dot';
+      text.textContent = 'Select a provider and model';
+      hint.textContent = 'Select a provider and model to begin';
+      sendBtn.disabled = true;
+    }
+  }
+
+  // call once on load
+  updateStatus();
+  document.getElementById('modelSelect').addEventListener('change', () => { updateStatus(); refreshCode(); });
+  // refresh code when params change
+  ['tempNum','maxTokens','topPNum','streamToggle','systemPrompt'].forEach(id => {
+    document.getElementById(id).addEventListener('change', refreshCode);
+  });
+
+  function toast(msg, type = 'success') {
+    const c = document.getElementById('toastContainer');
+    const el = document.createElement('div');
+    el.className = 'toast-msg' + (type === 'error' ? ' error' : '');
+    el.textContent = msg;
+    c.appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+  }
+
+  // ── Chat rendering ────────────────────────────────────────────────────────
+  function renderMessages() {
+    const container = document.getElementById('chatMessages');
+    const empty = document.getElementById('chatEmpty');
+
+    if (!messages.length) {
+      empty.style.display = 'flex';
+      container.querySelectorAll('.msg').forEach(el => el.remove());
+      return;
+    }
+    empty.style.display = 'none';
+
+    // Re-render all (simple approach)
+    container.querySelectorAll('.msg').forEach(el => el.remove());
+    messages.forEach((m, i) => {
+      if (m.role === 'system') return; // don't show system messages in chat
+      container.appendChild(buildMessageEl(m, i));
+    });
+    scrollToBottom();
+  }
+
+  function buildMessageEl(m, idx) {
+    const div = document.createElement('div');
+    div.className = 'msg ' + m.role + (m.error ? ' msg-error' : '');
+    div.dataset.idx = idx;
+
+    const avatar = document.createElement('div');
+    avatar.className = 'msg-avatar';
+    avatar.textContent = m.role === 'user' ? 'You' : 'AI';
+
+    const body = document.createElement('div');
+    body.className = 'msg-body';
+
+    const meta = document.createElement('div');
+    meta.className = 'msg-meta';
+    const timeStr = new Date(m.ts || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    meta.innerHTML = `<span>${timeStr}</span>`;
+    if (m.latency) meta.innerHTML += `<span>⚡ ${m.latency}ms</span>`;
+    if (m.tokens) meta.innerHTML += `<span>🔢 ${m.tokens} tokens</span>`;
+    if (m.provider) meta.innerHTML += `<span class="badge badge-blue">${m.provider}</span>`;
+
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble' + (m.role === 'assistant' && !m.error ? ' md-content' : '');
+    if (m.role === 'assistant' && !m.error) {
+      bubble.innerHTML = renderMarkdown(m.content);
+      addCodeCopyButtons(bubble);
+    } else {
+      bubble.textContent = m.content;
+    }
+
+    body.appendChild(meta);
+    body.appendChild(bubble);
+    div.appendChild(avatar);
+    div.appendChild(body);
+    return div;
+  }
+
+  function appendTypingIndicator() {
+    const container = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = 'msg assistant typing-indicator';
+    div.id = 'typingIndicator';
+    div.innerHTML = `
+      <div class="msg-avatar">AI</div>
+      <div class="msg-body">
+        <div class="msg-bubble">
+          <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+        </div>
+      </div>`;
+    container.appendChild(div);
+    scrollToBottom();
+    return div;
+  }
+
+  function removeTypingIndicator() {
+    document.getElementById('typingIndicator')?.remove();
+  }
+
+  /** Live-update the streaming assistant bubble */
+  function getOrCreateStreamBubble() {
+    let el = document.getElementById('streamBubble');
+    if (el) return el.querySelector('.msg-bubble');
+
+    const container = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = 'msg assistant';
+    div.id = 'streamBubble';
+    div.innerHTML = `
+      <div class="msg-avatar">AI</div>
+      <div class="msg-body">
+        <div class="msg-meta"><span id="streamTime">${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span></div>
+        <div class="msg-bubble" id="streamBubbleContent"></div>
+      </div>`;
+    container.appendChild(div);
+    scrollToBottom();
+    return div.querySelector('.msg-bubble');
+  }
+
+  function finalizeStreamBubble(content, meta) {
+    const el = document.getElementById('streamBubble');
+    if (!el) return;
+    el.removeAttribute('id');
+    const metaEl = el.querySelector('.msg-meta');
+    if (meta.latency) metaEl.innerHTML += `<span>⚡ ${meta.latency}ms</span>`;
+    if (meta.tokens) metaEl.innerHTML += `<span>🔢 ${meta.tokens} tokens</span>`;
+    if (meta.provider) metaEl.innerHTML += `<span class="badge badge-blue">${meta.provider}</span>`;
+    const finalBubble = el.querySelector('.msg-bubble');
+    finalBubble.className = 'msg-bubble md-content';
+    finalBubble.innerHTML = renderMarkdown(content);
+    finalBubble.classList.remove('stream-cursor');
+    addCodeCopyButtons(finalBubble);
+  }
+
+  // ── Markdown rendering helpers ────────────────────────────────────────────
+
+  // Configure marked once: safe defaults, GFM + line-breaks
+  if (typeof marked !== 'undefined') {
+    marked.setOptions({ gfm: true, breaks: true });
+  }
+
+  function renderMarkdown(text) {
+    if (typeof marked === 'undefined') return escText(text);
+    try {
+      return marked.parse(text);
+    } catch {
+      return escText(text);
+    }
+  }
+
+  function escText(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  /**
+   * Walk all <pre> blocks inside a rendered bubble and add a small "Copy" button.
+   * Uses event delegation so it works even when content is re-rendered.
+   */
+  function addCodeCopyButtons(el) {
+    el.querySelectorAll('pre').forEach(pre => {
+      if (pre.querySelector('.pre-copy-btn')) return; // already added
+      const btn = document.createElement('button');
+      btn.className = 'pre-copy-btn';
+      btn.textContent = 'Copy';
+      btn.addEventListener('click', () => {
+        const code = pre.querySelector('code')?.textContent ?? pre.textContent;
+        navigator.clipboard.writeText(code).then(() => {
+          btn.textContent = 'Copied!';
+          btn.classList.add('copied');
+          setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
+        });
+      });
+      pre.style.position = 'relative';
+      pre.appendChild(btn);
+    });
+  }
+
+  function scrollToBottom() {
+    const c = document.getElementById('chatMessages');
+    c.scrollTop = c.scrollHeight;
+  }
+
+  // ── Send message ──────────────────────────────────────────────────────────
+  async function sendMessage() {
+    if (isGenerating) return;
+    const input = document.getElementById('msgInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const pid = document.getElementById('providerSelect').value;
+    const mid = document.getElementById('modelSelect').value;
+    if (!pid || !mid) { toast('Select a provider and model first', 'error'); return; }
+
+    // push user message
+    messages.push({ role: 'user', content: text, ts: Date.now() });
+    input.value = '';
+    input.style.height = 'auto';
+    renderMessages();
+
+    const systemText = document.getElementById('systemPrompt').value.trim();
+    const temperature = parseFloat(document.getElementById('tempNum').value);
+    const maxTokens = parseInt(document.getElementById('maxTokens').value, 10) || 2048;
+    const topP = parseFloat(document.getElementById('topPNum').value);
+    const stream = document.getElementById('streamToggle').checked;
+
+    // build the messages array to send
+    const apiMessages = [];
+    if (systemText) apiMessages.push({ role: 'system', content: systemText });
+    // only include non-system messages
+    messages.filter(m => m.role !== 'system').forEach(m => apiMessages.push({ role: m.role, content: m.content }));
+
+    isGenerating = true;
+    document.getElementById('sendBtn').disabled = true;
+    const startTime = Date.now();
+
+    if (stream) {
+      await sendStreaming(mid, apiMessages, { temperature, max_tokens: maxTokens, top_p: topP }, pid, startTime);
+    } else {
+      await sendNonStreaming(mid, apiMessages, { temperature, max_tokens: maxTokens, top_p: topP }, pid, startTime);
+    }
+
+    isGenerating = false;
+    document.getElementById('sendBtn').disabled = false;
+    updateStatus();
+  }
+
+  async function sendNonStreaming(model, apiMessages, params, providerId, startTime) {
+    const indicator = appendTypingIndicator();
+    try {
+      const r = await authFetch('/api/admin/playground/chat', {
+        method: 'POST',
+        body: JSON.stringify({ provider_id: providerId, model, messages: apiMessages, stream: false, ...params }),
+      });
+      removeTypingIndicator();
+      const latency = Date.now() - startTime;
+
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({ error: { message: r.statusText } }));
+        const errMsg = err.error?.message || 'Request failed';
+        messages.push({ role: 'assistant', content: '⚠ ' + errMsg, error: true, ts: Date.now() });
+        renderMessages();
+        toast(errMsg, 'error');
+        return;
+      }
+
+      const data = await r.json();
+      const content = data.choices?.[0]?.message?.content ?? '';
+      const tokens = data.usage?.total_tokens;
+      const usedProviderId = r.headers.get('x-provider') || providerId;
+      const usedProv = providers.find(p => p.id === usedProviderId);
+      const usedProvider = usedProv ? usedProv.name : usedProviderId;
+
+      messages.push({ role: 'assistant', content, ts: Date.now(), latency, tokens, provider: usedProvider });
+      renderMessages();
+      updateLastCallStats(latency, tokens, usedProvider);
+    } catch (e) {
+      removeTypingIndicator();
+      messages.push({ role: 'assistant', content: '⚠ Network error: ' + e.message, error: true, ts: Date.now() });
+      renderMessages();
+      toast('Network error: ' + e.message, 'error');
+    }
+  }
+
+  async function sendStreaming(model, apiMessages, params, providerId, startTime) {
+    const bubble = getOrCreateStreamBubble();
+    let fullContent = '';
+    let tokens = null;
+
+    try {
+      const res = await authFetch('/api/admin/playground/chat', {
+        method: 'POST',
+        body: JSON.stringify({ provider_id: providerId, model, messages: apiMessages, stream: true, ...params }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: { message: res.statusText } }));
+        document.getElementById('streamBubble')?.remove();
+        const errMsg = err.error?.message || 'Request failed';
+        messages.push({ role: 'assistant', content: '⚠ ' + errMsg, error: true, ts: Date.now() });
+        renderMessages();
+        toast(errMsg, 'error');
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+
+        const lines = buf.split('\n');
+        buf = lines.pop() ?? '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const raw = line.slice(6).trim();
+          if (raw === '[DONE]') break;
+          try {
+            const chunk = JSON.parse(raw);
+            const delta = chunk.choices?.[0]?.delta?.content ?? '';
+            if (delta) {
+              fullContent += delta;
+              bubble.className = 'msg-bubble md-content stream-cursor';
+              bubble.innerHTML = renderMarkdown(fullContent);
+              scrollToBottom();
+            }
+            if (chunk.usage?.total_tokens) tokens = chunk.usage.total_tokens;
+          } catch { /* skip malformed chunk */ }
+        }
+      }
+
+      const latency = Date.now() - startTime;
+      const usedProviderId = res.headers.get('x-provider') || providerId;
+      const usedProv = providers.find(p => p.id === usedProviderId);
+      const usedProvider = usedProv ? usedProv.name : usedProviderId;
+      finalizeStreamBubble(fullContent, { latency, tokens, provider: usedProvider });
+      messages.push({ role: 'assistant', content: fullContent, ts: Date.now(), latency, tokens, provider: usedProvider });
+      updateLastCallStats(latency, tokens, usedProvider);
+    } catch (e) {
+      document.getElementById('streamBubble')?.remove();
+      messages.push({ role: 'assistant', content: '⚠ Stream error: ' + e.message, error: true, ts: Date.now() });
+      renderMessages();
+      toast('Stream error: ' + e.message, 'error');
+    }
+  }
+
+  function updateLastCallStats(latency, tokens, provider) {
+    if (latency) {
+      document.getElementById('latencyVal').textContent = latency;
+      document.getElementById('lastLatency').style.display = 'flex';
+    }
+    if (tokens) {
+      document.getElementById('tokensVal').textContent = tokens;
+      document.getElementById('lastTokens').style.display = 'flex';
+    }
+    if (provider) {
+      document.getElementById('providerVal').textContent = provider;
+      document.getElementById('lastProvider').style.display = 'flex';
+    }
+    const dot = document.getElementById('statusDot');
+    dot.className = 'status-dot ok';
+  }
+
+  function clearChat() {
+    messages = [];
+    renderMessages();
+    document.getElementById('lastLatency').style.display = 'none';
+    document.getElementById('lastTokens').style.display = 'none';
+    document.getElementById('lastProvider').style.display = 'none';
+    updateStatus();
+  }
+
+  // ── Tab switching ─────────────────────────────────────────────────────────
+  function switchMainTab(name, btn) {
+    document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.main-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + name).classList.add('active');
+    if (name === 'code') refreshCode();
+  }
+
+  // ── Code generation ───────────────────────────────────────────────────────
+  let currentLang = 'curl';
+
+  function switchLang(lang, btn) {
+    document.querySelectorAll('.code-lang-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    currentLang = lang;
+    document.getElementById('codeLangLabel').textContent = { curl: 'cURL', python: 'Python', typescript: 'TypeScript' }[lang];
+    refreshCode();
+  }
+
+  function refreshCode() {
+    const pid = document.getElementById('providerSelect').value;
+    const mid = document.getElementById('modelSelect').value;
+    const noSel = document.getElementById('codeNoSelection');
+    const content = document.getElementById('codeContent');
+
+    if (!pid || !mid) {
+      noSel.style.display = 'flex';
+      content.style.display = 'none';
+      return;
+    }
+    noSel.style.display = 'none';
+    content.style.display = 'block';
+
+    const origin = window.location.origin;
+    const endpoint = origin + '/v1/chat/completions';
+    const apiKey = 'YOUR_GATEWAY_API_KEY';
+    const temperature = parseFloat(document.getElementById('tempNum').value);
+    const maxTokens = parseInt(document.getElementById('maxTokens').value, 10) || 2048;
+    const topP = parseFloat(document.getElementById('topPNum').value);
+    const stream = document.getElementById('streamToggle').checked;
+    const systemPrompt = document.getElementById('systemPrompt').value.trim() || 'You are a helpful assistant.';
+    const provider = providers.find(p => p.id === pid);
+    const providerName = provider ? provider.name : pid;
+
+    const snippet = buildSnippet(currentLang, { endpoint, apiKey, model: mid, providerName, temperature, maxTokens, topP, stream, systemPrompt });
+    document.getElementById('codeSnippet').textContent = snippet;
+    // reset copy button
+    const copyBtn = document.getElementById('copyBtn');
+    copyBtn.textContent = 'Copy';
+    copyBtn.classList.remove('copied');
+  }
+
+  function buildSnippet(lang, { endpoint, apiKey, model, providerName, temperature, maxTokens, topP, stream, systemPrompt }) {
+    const body = JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: 'Hello!' }
+      ],
+      temperature,
+      max_tokens: maxTokens,
+      top_p: topP,
+      stream
+    }, null, 2);
+
+    if (lang === 'curl') {
+      return `# ${providerName} via LLMux — ${model}
+# Endpoint: ${endpoint}
+
+curl ${endpoint} \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer ${apiKey}" \\
+  -d '${JSON.stringify({
+    model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: 'Hello!' }
+    ],
+    temperature,
+    max_tokens: maxTokens,
+    top_p: topP,
+    stream
+  }, null, 2).replace(/'/g, "'\\''")}'`;
+    }
+
+    if (lang === 'python') {
+      return `# ${providerName} via LLMux — ${model}
+# Install: pip install openai
+
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="${endpoint.replace('/chat/completions', '')}",
+    api_key="${apiKey}",
+)
+
+response = client.chat.completions.create(
+    model="${model}",
+    messages=[
+        {"role": "system", "content": "${systemPrompt.replace(/"/g, '\\"')}"},
+        {"role": "user", "content": "Hello!"},
+    ],
+    temperature=${temperature},
+    max_tokens=${maxTokens},
+    top_p=${topP},
+    stream=${stream ? 'True' : 'False'},
+)
+
+${stream ? `for chunk in response:
+    delta = chunk.choices[0].delta.content or ""
+    print(delta, end="", flush=True)` : `print(response.choices[0].message.content)`}`;
+    }
+
+    if (lang === 'typescript') {
+      return `// ${providerName} via LLMux — ${model}
+// Install: npm install openai
+
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "${endpoint.replace('/chat/completions', '')}",
+  apiKey: "${apiKey}",
+});
+
+${stream ? `const stream = await client.chat.completions.create({
+  model: "${model}",
+  messages: [
+    { role: "system", content: "${systemPrompt.replace(/"/g, '\\"')}" },
+    { role: "user", content: "Hello!" },
+  ],
+  temperature: ${temperature},
+  max_tokens: ${maxTokens},
+  top_p: ${topP},
+  stream: true,
+});
+
+for await (const chunk of stream) {
+  const delta = chunk.choices[0]?.delta?.content ?? "";
+  process.stdout.write(delta);
+}` : `const response = await client.chat.completions.create({
+  model: "${model}",
+  messages: [
+    { role: "system", content: "${systemPrompt.replace(/"/g, '\\"')}" },
+    { role: "user", content: "Hello!" },
+  ],
+  temperature: ${temperature},
+  max_tokens: ${maxTokens},
+  top_p: ${topP},
+  stream: false,
+});
+
+console.log(response.choices[0].message.content);`}`;
+    }
+
+    return '';
+  }
+
+  function copyCode() {
+    const text = document.getElementById('codeSnippet').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+  </script>
+</body>
+</html>

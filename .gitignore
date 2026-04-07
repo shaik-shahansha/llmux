@@ -1,0 +1,34 @@
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
+*.tsbuildinfo
+coverage/
+.vercel/
+.railway/
+
+# pnpm
+pnpm-lock.yaml
+
+# OS / editor
+Thumbs.db
+.idea/
+.vscode/settings.json
+*.swp
+*.swo
+
+# Build artifacts
+*.js.map
+build/
+
+# Admin & dynamic config (contain secrets — never commit)
+config/admin.json
+config/providers-dynamic.json
+config/gateway-settings.json
+
+# Local overrides — use .env for secrets, providers.yaml for config
+.env.local
+.env.*.local
+config/*.local.yaml
+config/*.local.json

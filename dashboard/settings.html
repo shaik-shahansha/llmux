@@ -1,0 +1,1363 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLMux — Settings</title>
+<style>
+/* ── Light theme (default) ──────────────────────────────────────────────── */
+:root {
+  --bg: #f6f8fa; --surface: #ffffff; --surface2: #f0f2f5; --border: #d0d7de;
+  --accent: #0969da; --accent-hover: #0550ae;
+  --success: #1a7f37; --error: #cf222e; --warning: #9a6700; --purple: #8250df;
+  --text: #1f2328; --text-muted: #57606a; --text-dim: #8c959f;
+  --input-bg: #ffffff; --radius: 8px; --radius-sm: 5px;
+  --sidebar-w: 220px;
+  --nav-shadow: 0 1px 0 var(--border);
+  --card-shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --modal-shadow: 0 20px 60px rgba(0,0,0,.18);
+  --modal-bg: rgba(0,0,0,.4);
+  --loading-bg: rgba(246,248,250,.8);
+  --table-hover: rgba(0,0,0,.025);
+  --toggle-off: #d0d7de;
+}
+
+/* ── Dark theme ─────────────────────────────────────────────────────────── */
+html[data-theme="dark"] {
+  --bg: #0d1117; --surface: #161b22; --surface2: #1c2128; --border: #30363d;
+  --accent: #58a6ff; --accent-hover: #79c0ff;
+  --success: #3fb950; --error: #f85149; --warning: #d29922; --purple: #bc8cff;
+  --text: #e6edf3; --text-muted: #8b949e; --text-dim: #6e7681;
+  --input-bg: #0d1117;
+  --nav-shadow: 0 1px 0 var(--border);
+  --card-shadow: 0 1px 3px rgba(0,0,0,.2);
+  --modal-shadow: 0 24px 64px rgba(0,0,0,.6);
+  --modal-bg: rgba(0,0,0,.7);
+  --loading-bg: rgba(13,17,23,.7);
+  --table-hover: rgba(255,255,255,.02);
+  --toggle-off: var(--border);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { transition: background .2s, color .2s; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; min-height: 100vh; display: flex; flex-direction: column; font-size: .9rem; }
+
+/* NAV */
+.topnav { background: var(--surface); border-bottom: 1px solid var(--border); box-shadow: var(--nav-shadow); padding: 0 1.5rem; height: 52px; display: flex; align-items: center; gap: 1rem; position: sticky; top: 0; z-index: 100; }
+.topnav .brand { display: flex; align-items: center; gap: .5rem; font-weight: 700; font-size: 1rem; text-decoration: none; color: var(--text); margin-right: 1rem; }
+.brand-icon { width: 28px; height: 28px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: .85rem; color: #fff; }
+html[data-theme="dark"] .brand-icon { color: #000; }
+.nav-link { color: var(--text-muted); text-decoration: none; font-size: .875rem; padding: .25rem .5rem; border-radius: 4px; transition: color .15s; }
+.nav-link:hover { color: var(--text); }
+.nav-link.active { color: var(--accent); font-weight: 500; }
+.topnav .spacer { flex: 1; }
+.user-badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: .3rem .75rem; font-size: .8rem; color: var(--text-muted); display: flex; align-items: center; gap: .4rem; }
+.logout-btn { background: none; border: 1px solid var(--border); color: var(--text-muted); border-radius: 6px; padding: .3rem .75rem; font-size: .8rem; cursor: pointer; transition: border-color .15s, color .15s; }
+.logout-btn:hover { border-color: var(--error); color: var(--error); }
+
+/* THEME TOGGLE BUTTON */
+.theme-toggle { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; width: 34px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .15s, border-color .15s; font-size: 1rem; flex-shrink: 0; }
+.theme-toggle:hover { border-color: var(--accent); background: var(--bg); }
+.theme-toggle .icon-sun { display: block; }
+.theme-toggle .icon-moon { display: none; }
+html[data-theme="dark"] .theme-toggle .icon-sun { display: none; }
+html[data-theme="dark"] .theme-toggle .icon-moon { display: block; }
+
+/* LAYOUT */
+.layout { display: flex; flex: 1; }
+.sidebar { width: var(--sidebar-w); border-right: 1px solid var(--border); background: var(--surface); padding: 1.25rem .75rem; position: sticky; top: 52px; height: calc(100vh - 52px); overflow-y: auto; flex-shrink: 0; }
+.sidebar-section { margin-bottom: 1.5rem; }
+.sidebar-label { font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--text-dim); padding: 0 .5rem .4rem; }
+.sidebar-item { display: flex; align-items: center; gap: .5rem; padding: .45rem .75rem; border-radius: var(--radius-sm); color: var(--text-muted); cursor: pointer; transition: background .1s, color .1s; font-size: .875rem; }
+.sidebar-item:hover { background: var(--surface2); color: var(--text); }
+.sidebar-item.active { background: rgba(9,105,218,.1); color: var(--accent); font-weight: 500; }
+html[data-theme="dark"] .sidebar-item.active { background: rgba(88,166,255,.12); }
+.sidebar-item .badge-count { margin-left: auto; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 0 6px; font-size: .7rem; color: var(--text-dim); }
+
+/* MAIN CONTENT */
+.main { flex: 1; padding: 2rem; overflow-y: auto; max-width: 1100px; }
+.page-header { margin-bottom: 1.75rem; }
+.page-title { font-size: 1.3rem; font-weight: 700; }
+.page-sub { color: var(--text-muted); font-size: .875rem; margin-top: .3rem; }
+
+/* CARDS */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem; box-shadow: var(--card-shadow); }
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.card-title { font-weight: 600; font-size: .95rem; }
+.card-sub { color: var(--text-muted); font-size: .8rem; margin-top: .2rem; }
+
+/* PROVIDER TABLE */
+.provider-table { width: 100%; border-collapse: collapse; }
+.provider-table th { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-dim); padding: .5rem .75rem; text-align: left; border-bottom: 1px solid var(--border); background: var(--surface2); }
+.provider-table td { padding: .7rem .75rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.provider-table tr:last-child td { border-bottom: none; }
+.provider-table tr:hover td { background: var(--table-hover); }
+.provider-name { font-weight: 500; }
+.provider-id { font-size: .75rem; color: var(--text-dim); font-family: monospace; }
+.modality-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .72rem; font-weight: 600; text-transform: uppercase; }
+.modality-text { background: rgba(9,105,218,.1); color: var(--accent); }
+html[data-theme="dark"] .modality-text { background: rgba(88,166,255,.15); }
+.modality-image { background: rgba(130,80,223,.1); color: var(--purple); }
+html[data-theme="dark"] .modality-image { background: rgba(188,140,255,.15); }
+.modality-tts { background: rgba(26,127,55,.1); color: var(--success); }
+html[data-theme="dark"] .modality-tts { background: rgba(63,185,80,.12); }
+.modality-stt { background: rgba(154,103,0,.1); color: var(--warning); }
+html[data-theme="dark"] .modality-stt { background: rgba(210,153,34,.12); }
+.modality-video { background: rgba(207,34,46,.1); color: var(--error); }
+html[data-theme="dark"] .modality-video { background: rgba(248,81,73,.12); }
+.tier-badge { width: 22px; height: 22px; border-radius: 50%; font-size: .7rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+.tier-1 { background: rgba(26,127,55,.15); color: var(--success); }
+.tier-2 { background: rgba(9,105,218,.12); color: var(--accent); }
+.tier-3 { background: rgba(154,103,0,.12); color: var(--warning); }
+.tier-4 { background: rgba(207,34,46,.12); color: var(--error); }
+html[data-theme="dark"] .tier-1 { background: rgba(63,185,80,.2); }
+html[data-theme="dark"] .tier-2 { background: rgba(88,166,255,.2); }
+html[data-theme="dark"] .tier-3 { background: rgba(210,153,34,.2); }
+html[data-theme="dark"] .tier-4 { background: rgba(248,81,73,.2); }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+.status-healthy { background: var(--success); }
+.status-degraded { background: var(--warning); }
+.status-unavailable, .status-unknown { background: var(--error); }
+.status-off { background: var(--border); }
+.key-count { font-size: .8rem; color: var(--text-muted); }
+.actions-cell { white-space: nowrap; }
+
+/* PROVIDER TOGGLE SWITCH */
+.toggle { position: relative; display: inline-flex; align-items: center; cursor: pointer; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-track { width: 36px; height: 20px; background: var(--toggle-off); border-radius: 10px; transition: background .2s; }
+.toggle input:checked + .toggle-track { background: var(--success); }
+.toggle-thumb { position: absolute; left: 2px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+.toggle input:checked ~ .toggle-thumb { transform: translateX(16px); }
+
+/* BUTTONS */
+.btn { display: inline-flex; align-items: center; gap: .35rem; padding: .45rem .875rem; border: none; border-radius: var(--radius-sm); font-size: .8rem; font-weight: 500; cursor: pointer; transition: background .15s, box-shadow .15s, opacity .15s; white-space: nowrap; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); box-shadow: 0 2px 6px rgba(9,105,218,.3); }
+html[data-theme="dark"] .btn-primary { color: #000; }
+html[data-theme="dark"] .btn-primary:hover:not(:disabled) { box-shadow: 0 2px 6px rgba(88,166,255,.3); }
+.btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: var(--surface2); }
+.btn-danger { background: rgba(207,34,46,.08); color: var(--error); border: 1px solid rgba(207,34,46,.4); }
+.btn-danger:hover:not(:disabled) { background: rgba(207,34,46,.15); border-color: var(--error); }
+html[data-theme="dark"] .btn-danger { background: rgba(248,81,73,.1); border-color: var(--error); }
+html[data-theme="dark"] .btn-danger:hover:not(:disabled) { background: rgba(248,81,73,.2); }
+.btn-sm { padding: .3rem .6rem; font-size: .75rem; }
+
+/* MODAL */
+.modal-backdrop { position: fixed; inset: 0; background: var(--modal-bg); z-index: 200; display: flex; align-items: flex-start; justify-content: center; padding-top: 4rem; overflow-y: auto; backdrop-filter: blur(2px); }
+.modal-backdrop.hidden { display: none; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.75rem; width: 100%; max-width: 580px; box-shadow: var(--modal-shadow); }
+.modal-title { font-size: 1.05rem; font-weight: 600; margin-bottom: 1.25rem; }
+.modal-footer { display: flex; justify-content: flex-end; gap: .75rem; margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.25rem; }
+
+/* FORM ELEMENTS */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.form-group { margin-bottom: 1rem; }
+.form-group.full { grid-column: 1/-1; }
+label { display: block; font-size: .8rem; font-weight: 500; margin-bottom: .4rem; color: var(--text-muted); }
+input[type="text"], input[type="number"], input[type="url"], input[type="password"], select, textarea {
+  width: 100%; padding: .55rem .75rem; background: var(--input-bg); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text); font-size: .875rem; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(9,105,218,.12); }
+html[data-theme="dark"] input:focus, html[data-theme="dark"] select:focus, html[data-theme="dark"] textarea:focus { box-shadow: 0 0 0 3px rgba(88,166,255,.15); }
+input::placeholder, textarea::placeholder { color: var(--text-dim); }
+select { cursor: pointer; }
+textarea { resize: vertical; min-height: 80px; font-family: monospace; font-size: .8rem; }
+.form-hint { font-size: .75rem; color: var(--text-dim); margin-top: .3rem; line-height: 1.4; }
+.form-hint code { font-family: monospace; background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; padding: 0 3px; font-size: .72rem; color: var(--text-muted); }
+
+/* KEYS MANAGER */
+.key-list { display: flex; flex-direction: column; gap: .4rem; margin-bottom: .5rem; }
+.key-item { display: flex; align-items: center; gap: .5rem; background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: .4rem .6rem; }
+.key-val { font-family: monospace; font-size: .8rem; flex: 1; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btn-add-key { width: 100%; justify-content: center; border: 1px dashed var(--border); background: none; color: var(--text-muted); }
+.btn-add-key:hover { border-color: var(--accent); color: var(--accent); }
+.add-key-row { display: flex; gap: .5rem; margin-top: .4rem; align-items: center; }
+.add-key-row input { flex: 1; min-width: 0; }
+
+/* DYNAMIC PRIORITY LISTS */
+.dynamic-list { display: flex; flex-direction: column; gap: .45rem; margin-bottom: .5rem; min-height: 4px; }
+.dynamic-row { display: flex; align-items: center; gap: .55rem; }
+.row-badge { min-width: 26px; height: 26px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border); font-size: .68rem; font-weight: 700; color: var(--text-muted); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dynamic-row input { flex: 1; }
+.btn-add-row { width: 100%; padding: .4rem; border: 1px dashed var(--border); border-radius: var(--radius-sm); background: none; color: var(--text-muted); font-size: .8rem; cursor: pointer; transition: border-color .15s, color .15s; text-align: center; }
+.btn-add-row:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ADVANCED DETAILS */
+details.advanced-section { border: 1px solid var(--border); border-radius: var(--radius); margin-top: 1.25rem; overflow: hidden; }
+summary.advanced-toggle { padding: .75rem 1rem; cursor: pointer; font-size: .85rem; font-weight: 500; color: var(--text-muted); list-style: none; user-select: none; display: flex; align-items: center; gap: .4rem; background: var(--surface2); }
+summary.advanced-toggle::-webkit-details-marker { display: none; }
+summary.advanced-toggle::after { content: '▸'; margin-left: auto; transition: transform .2s; font-size: .75rem; }
+details[open] summary.advanced-toggle::after { transform: rotate(90deg); }
+summary.advanced-toggle:hover { color: var(--text); }
+.advanced-body { padding: 1rem; border-top: 1px solid var(--border); background: var(--surface2); }
+
+/* SECTIONS */
+.section { display: none; }
+.section.active { display: block; }
+
+/* SEARCH / FILTER */
+.filter-row { display: flex; gap: .75rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+.search-input { flex: 1; min-width: 200px; }
+.filter-select { max-width: 160px; }
+
+/* STAT CARDS */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: .75rem; margin-bottom: 1.5rem; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; box-shadow: var(--card-shadow); }
+.stat-value { font-size: 1.5rem; font-weight: 700; }
+.stat-label { font-size: .75rem; color: var(--text-muted); margin-top: .2rem; }
+
+/* ALERTS / TOASTS */
+.toast { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 300; display: flex; flex-direction: column; gap: .5rem; max-width: 360px; }
+.toast-item { padding: .75rem 1rem; border-radius: var(--radius); font-size: .875rem; animation: fadeUp .25s ease; border: 1px solid; box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+.toast-success { background: rgba(26,127,55,.08); border-color: var(--success); color: var(--success); }
+html[data-theme="dark"] .toast-success { background: rgba(63,185,80,.1); }
+.toast-error { background: rgba(207,34,46,.08); border-color: var(--error); color: var(--error); }
+html[data-theme="dark"] .toast-error { background: rgba(248,81,73,.1); }
+.toast-info { background: rgba(9,105,218,.08); border-color: var(--accent); color: var(--accent); }
+html[data-theme="dark"] .toast-info { background: rgba(88,166,255,.1); }
+@keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+/* SPINNER */
+.spin { animation: spin .8s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-overlay { position: absolute; inset: 0; background: var(--loading-bg); border-radius: inherit; display: flex; align-items: center; justify-content: center; z-index: 10; font-size: 1.5rem; }
+
+/* MISC */
+.empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+.empty-state .icon { font-size: 2.5rem; margin-bottom: .75rem; }
+.tag-list { display: flex; flex-wrap: wrap; gap: .3rem; }
+.tag { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 7px; font-size: .72rem; font-family: monospace; color: var(--text-muted); }
+
+/* DIVIDERS & SEPARATORS */
+hr { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
+
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .form-grid { grid-template-columns: 1fr; }
+  .filter-row { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <a href="/dashboard" class="brand"><div class="brand-icon">L</div>LLMux</a>
+  <a href="/dashboard" class="nav-link">Dashboard</a>
+  <a href="/playground" class="nav-link">Playground</a>
+  <a href="/settings" class="nav-link active">Settings</a>
+  <div class="spacer"></div>
+  <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme"><span class="icon-sun">☀️</span><span class="icon-moon">🌙</span></button>
+  <div class="user-badge">👤 <span id="adminName">admin</span></div>
+  <button class="logout-btn" onclick="logout()">Sign out</button>
+</nav>
+
+<!-- LAYOUT -->
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Providers</div>
+      <div class="sidebar-item active" onclick="showSection('providers')" id="nav-providers">
+        🔌 All Providers <span class="badge-count" id="cnt-providers">—</span>
+      </div>
+      <div class="sidebar-item" onclick="showSection('add-provider')" id="nav-add-provider">
+        ➕ Add Provider
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Configuration</div>
+      <div class="sidebar-item" onclick="showSection('routing')" id="nav-routing">⚡ Router Strategy</div>
+      <div class="sidebar-item" onclick="showSection('gateway')" id="nav-gateway">🌐 Gateway - APIs</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Account</div>
+      <div class="sidebar-item" onclick="showSection('security')" id="nav-security">🔐 Change Password</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ── PROVIDERS LIST ── -->
+    <div class="section active" id="section-providers">
+      <div class="page-header">
+        <div class="page-title">Provider Management</div>
+        <div class="page-sub">Add, edit, and manage your AI provider connections and API keys</div>
+      </div>
+
+      <div class="filter-row">
+        <input type="text" class="search-input" id="providerSearch" placeholder="Search providers…" oninput="filterProviders()">
+        <select class="filter-select" id="modalityFilter" onchange="filterProviders()">
+          <option value="">All modalities</option>
+          <option value="text">Text</option>
+          <option value="image">Image</option>
+          <option value="tts">TTS</option>
+          <option value="stt">STT</option>
+          <option value="video">Video</option>
+        </select>
+        <select class="filter-select" id="tierFilter" onchange="filterProviders()">
+          <option value="">All tiers</option>
+          <option value="1">Tier 1 — High Priority</option>
+          <option value="2">Tier 2 — Standard</option>
+          <option value="3">Tier 3 — Fallback</option>
+          <option value="4">Tier 4 — Last Resort</option>
+        </select>
+        <button class="btn btn-primary" onclick="showSection('add-provider')">+ Add Provider</button>
+      </div>
+
+      <div class="card" style="padding:0; position:relative; overflow:hidden;">
+        <div id="providersLoading" class="loading-overlay" style="display:none;">⟳</div>
+        <table class="provider-table">
+          <thead>
+            <tr>
+              <th>Provider</th>
+              <th>Modality</th>
+              <th>Tier</th>
+              <th>Keys</th>
+              <th>Models</th>
+              <th>Status</th>
+              <th>Enabled</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="providersBody">
+            <tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted);">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── ADD PROVIDER ── -->
+    <div class="section" id="section-add-provider">
+      <div class="page-header" style="display:flex;align-items:center;gap:1rem;">
+        <button class="btn btn-secondary btn-sm" onclick="showSection('providers')">← Back</button>
+        <div>
+          <div class="page-title">Add Provider</div>
+          <div class="page-sub">Connect a new AI provider or API endpoint</div>
+        </div>
+      </div>
+
+      <!-- Quick-add presets -->
+      <div class="card" style="margin-bottom:1.25rem;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Quick Presets</div>
+            <div class="card-sub">One click to prefill a known provider — just add your API key</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:.6rem;" id="presetsContainer">
+          <!-- filled by JS -->
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="margin-bottom:1.5rem;">Provider Details</div>
+        <form id="addProviderForm" onsubmit="submitAddProvider(event)">
+
+          <!-- Provider Name -->
+          <div class="form-group">
+            <label>Provider Name *</label>
+            <input type="text" id="np-name" placeholder="My Groq Account" required oninput="autoFillId(this.value)">
+            <div class="form-hint">A friendly label, e.g. "Groq", "My OpenAI". The provider ID is auto-generated.</div>
+          </div>
+
+          <!-- API Endpoint -->
+          <div class="form-group">
+            <label>API Endpoint (Base URL) *</label>
+            <input type="url" id="np-baseUrl" placeholder="https://api.openai.com/v1" required>
+            <div class="form-hint">Most OpenAI-compatible providers end in <code>/v1</code>. Check the provider's docs.</div>
+          </div>
+
+          <!-- API Keys with priority order -->
+          <div class="form-group">
+            <label>API Keys <span style="color:var(--text-dim);font-weight:400;">— Key 1 is used first; next key rotates in on rate-limit</span></label>
+            <div id="np-key-list" class="dynamic-list"></div>
+            <button type="button" class="btn-add-row" onclick="addKeyRow('np-key-list')">+ Add API Key</button>
+            <div class="form-hint">Leave empty for free providers that need no auth. Multiple keys multiply your effective rate limit.</div>
+          </div>
+
+          <!-- Models with priority order -->
+          <div class="form-group">
+            <label>Models <span style="color:var(--text-dim);font-weight:400;">— Model 1 is the default when client sends <code>model: auto</code></span></label>
+            <div id="np-model-list" class="dynamic-list"></div>
+            <button type="button" class="btn-add-row" onclick="addModelRow('np-model-list')">+ Add Model</button>
+            <div class="form-hint">Format: <code>model-id</code> or <code>model-id:friendly-alias</code>. Example: <code>gpt-4o:gpt4</code></div>
+          </div>
+
+          <!-- ── ADVANCED (collapsed by default) ── -->
+          <details class="advanced-section">
+            <summary class="advanced-toggle">⚙ Advanced Options — adapter, tier, rate limits, cost</summary>
+            <div class="advanced-body">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Provider ID *</label>
+                  <input type="text" id="np-id" placeholder="my-groq" required pattern="[a-z0-9\-]+" title="Lowercase letters, numbers, hyphens">
+                  <div class="form-hint">Auto-filled from name. Lowercase, hyphens only.</div>
+                </div>
+                <div class="form-group">
+                  <label>Modality</label>
+                  <select id="np-modality">
+                    <option value="text">Text (Chat)</option>
+                    <option value="image">Image Generation</option>
+                    <option value="tts">Text-to-Speech</option>
+                    <option value="stt">Speech-to-Text</option>
+                    <option value="video">Video Generation</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>API Adapter</label>
+                  <select id="np-adapter">
+                    <option value="openai" selected>OpenAI-compatible (default)</option>
+                    <option value="gemini">Google Gemini</option>
+                    <option value="cloudflare">Cloudflare AI</option>
+                    <option value="cohere">Cohere</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                  <div class="form-hint">Only change if you're using Gemini, Cloudflare, or Cohere.</div>
+                </div>
+                <div class="form-group">
+                  <label>Priority Tier</label>
+                  <select id="np-tier">
+                    <option value="1">Tier 1 — High Priority (tried first)</option>
+                    <option value="2" selected>Tier 2 — Standard</option>
+                    <option value="3">Tier 3 — Fallback</option>
+                    <option value="4">Tier 4 — Last Resort</option>
+                  </select>
+                  <div class="form-hint">Tier 1 is tried first on every request. Not related to cost.</div>
+                </div>
+                <div class="form-group">
+                  <label>Rate Limit — RPM</label>
+                  <input type="number" id="np-rpm" placeholder="Unlimited" min="0">
+                </div>
+                <div class="form-group">
+                  <label>Rate Limit — RPD</label>
+                  <input type="number" id="np-rpd" placeholder="Unlimited" min="0">
+                </div>
+                <div class="form-group">
+                  <label>Rate Limit — TPM</label>
+                  <input type="number" id="np-tpm" placeholder="Unlimited" min="0">
+                </div>
+                <div class="form-group">
+                  <label>Concurrency (max parallel requests)</label>
+                  <input type="number" id="np-concurrency" value="5" min="1" max="100">
+                </div>
+                <div class="form-group">
+                  <label>Cost per 1M input tokens (USD)</label>
+                  <input type="number" id="np-costIn" placeholder="0.00" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                  <label>Cost per 1M output tokens (USD)</label>
+                  <input type="number" id="np-costOut" placeholder="0.00" min="0" step="0.01">
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <div style="display:flex;justify-content:flex-end;gap:.75rem;margin-top:1.5rem;border-top:1px solid var(--border);padding-top:1rem;">
+            <button type="button" class="btn btn-secondary" onclick="showSection('providers')">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="addSubmitBtn">Save Provider</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── ROUTING ── -->
+    <div class="section" id="section-routing">
+      <div class="page-header">
+        <div class="page-title">Router Strategy</div>
+        <div class="page-sub">Configure how LLMux selects among available providers</div>
+      </div>
+      <div class="card">
+        <form id="routingForm" onsubmit="saveRouting(event)">
+          <div class="form-grid">
+            <div class="form-group full">
+              <label>Default Strategy</label>
+              <select id="rt-strategy">
+                <option value="priority">Priority — use Tier 1 first, fallback down</option>
+                <option value="round-robin">Round Robin — distribute evenly</option>
+                <option value="least-busy">Least Busy — fewest active requests</option>
+                <option value="latency-based">Latency Based — fastest first</option>
+                <option value="random-weighted">Random Weighted — by tier weight</option>
+              </select>
+              <div class="form-hint">Priority mode respects provider tier. Tier 1 = tried first, Tier 4 = last resort. Costs nothing to put a free provider at Tier 1.</div>
+            </div>
+            <div class="form-group">
+              <label>Fallback Enabled</label>
+              <select id="rt-fallback">
+                <option value="true">Yes — try next provider on failure</option>
+                <option value="false">No — fail immediately</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Max Fallback Attempts</label>
+              <input type="number" id="rt-maxFallback" value="5" min="1" max="20">
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;">
+            <button type="submit" class="btn btn-primary">Save Strategy</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── GATEWAY ── -->
+    <div class="section" id="section-gateway">
+      <div class="page-header">
+        <div class="page-title">Gateway Settings</div>
+        <div class="page-sub">Request limits and gateway behavior</div>
+      </div>
+      <div class="card">
+        <form id="gatewayForm" onsubmit="saveGateway(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Max Request Size (MB)</label>
+              <input type="number" id="gw-maxSize" value="10" min="1" max="100">
+            </div>
+            <div class="form-group">
+              <label>Request Timeout (ms)</label>
+              <input type="number" id="gw-timeout" value="60000" min="1000" step="1000">
+            </div>
+            <div class="form-group">
+              <label>Enable Request Logging</label>
+              <select id="gw-logging">
+                <option value="true">Yes — log all requests</option>
+                <option value="false">No — disable request log</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;">
+            <button type="submit" class="btn btn-primary">Save Settings</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Gateway API Key card -->
+      <div class="card" style="margin-top:1.5rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.75rem;">
+          <div>
+            <div style="font-weight:600;font-size:1rem;margin-bottom:.2rem;">Gateway API Keys</div>
+            <div style="font-size:.82rem;color:var(--text-muted);">
+              Clients must send <code>Authorization: Bearer &lt;key&gt;</code> to access
+              <code>/v1/</code> endpoints. Create separate keys per integration so you can
+              revoke them individually.
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="openNewKeyModal()">＋ New Key</button>
+        </div>
+
+        <!-- Env-var notice -->
+        <div id="gwkey-env-notice" style="display:none;margin-bottom:.75rem;padding:.5rem .75rem;background:var(--bg-hover);border-radius:6px;font-size:.82rem;color:var(--text-muted);">
+          ℹ <code>GATEWAY_API_KEY</code> environment variable is also active.
+        </div>
+
+        <!-- Keys table -->
+        <div id="gwkey-table-wrap">
+          <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border);color:var(--text-muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;">
+                <th style="text-align:left;padding:.5rem .75rem;font-weight:600;">Name</th>
+                <th style="text-align:left;padding:.5rem .75rem;font-weight:600;">Key Hint</th>
+                <th style="text-align:left;padding:.5rem .75rem;font-weight:600;">Created</th>
+                <th style="text-align:right;padding:.5rem .75rem;font-weight:600;"></th>
+              </tr>
+            </thead>
+            <tbody id="gwkey-tbody">
+              <tr id="gwkey-empty-row">
+                <td colspan="4" style="text-align:center;padding:1.5rem;color:var(--text-muted);font-size:.85rem;">
+                  No gateway keys yet — all requests are allowed without auth.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECURITY ── -->
+    <div class="section" id="section-security">
+      <div class="page-header">
+        <div class="page-title">Change Password</div>
+        <div class="page-sub">Update your admin account password</div>
+      </div>
+      <div class="card" style="max-width:420px;">
+        <form id="passwordForm" onsubmit="changePassword(event)">
+          <div class="form-group">
+            <label>Current Password</label>
+            <input type="password" id="cur-pw" autocomplete="current-password" required>
+          </div>
+          <div class="form-group">
+            <label>New Password</label>
+            <input type="password" id="new-pw" autocomplete="new-password" required minlength="8">
+          </div>
+          <div class="form-group">
+            <label>Confirm New Password</label>
+            <input type="password" id="confirm-pw" autocomplete="new-password" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Update Password</button>
+        </form>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- NEW GATEWAY KEY MODAL -->
+<div class="modal-backdrop hidden" id="newKeyModal">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-title">New Gateway API Key</div>
+    <form onsubmit="submitNewKey(event)">
+      <div class="form-group" style="margin-bottom:1rem;">
+        <label>Key Name</label>
+        <input type="text" id="nk-name" placeholder="e.g. Production, VS Code, Mobile App" maxlength="64" autocomplete="off" required>
+        <div style="font-size:.78rem;color:var(--text-muted);margin-top:.3rem;">A label so you know where this key is used.</div>
+      </div>
+
+      <!-- Reveal area (shown after creation) -->
+      <div id="nk-reveal" style="display:none;margin-bottom:1rem;">
+        <div style="background:var(--bg-hover);border:1.5px solid var(--accent);border-radius:8px;padding:.85rem 1rem;margin-bottom:.5rem;">
+          <div style="font-size:.75rem;font-weight:600;color:var(--text-muted);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.04em;">Your new key — copy it now</div>
+          <div style="display:flex;align-items:center;gap:.5rem;">
+            <code id="nk-value" style="flex:1;font-size:.85rem;word-break:break-all;color:var(--accent);"></code>
+            <button type="button" class="btn btn-sm" onclick="copyNewKey()">📋 Copy</button>
+          </div>
+        </div>
+        <div style="padding:.45rem .75rem;background:#fef3c7;border-radius:6px;font-size:.8rem;color:#92400e;">
+          ⚠ This key is shown only once and cannot be recovered. Store it securely.
+        </div>
+      </div>
+
+      <div id="nk-actions" style="display:flex;justify-content:flex-end;gap:.5rem;">
+        <button type="button" class="btn" onclick="closeNewKeyModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="nk-submit-btn">Generate Key</button>
+      </div>
+      <div id="nk-done-actions" style="display:none;justify-content:flex-end;">
+        <button type="button" class="btn btn-primary" onclick="closeNewKeyModal()">Done</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- EDIT PROVIDER MODAL -->
+<div class="modal-backdrop hidden" id="editModal">
+  <div class="modal">
+    <div class="modal-title" id="editModalTitle">Edit Provider</div>
+    <form id="editForm" onsubmit="submitEditProvider(event)">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Display Name</label>
+          <input type="text" id="ep-name" required>
+        </div>
+        <div class="form-group">
+          <label>Tier</label>
+          <select id="ep-tier">
+            <option value="1">Tier 1 — High Priority (tried first)</option>
+            <option value="2">Tier 2 — Standard</option>
+            <option value="3">Tier 3 — Fallback</option>
+            <option value="4">Tier 4 — Last Resort</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>API Base URL</label>
+          <input type="url" id="ep-baseUrl" required>
+        </div>
+        <div class="form-group">
+          <label>Adapter</label>
+          <select id="ep-adapter">
+            <option value="openai">OpenAI-compatible</option>
+            <option value="gemini">Google Gemini</option>
+            <option value="cloudflare">Cloudflare AI</option>
+            <option value="cohere">Cohere</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Concurrency</label>
+          <input type="number" id="ep-concurrency" min="1" max="100">
+        </div>
+        <div class="form-group">
+          <label>Timeout (ms)</label>
+          <input type="number" id="ep-timeout" min="1000" step="1000">
+        </div>
+        <!-- Rate limits -->
+        <div class="form-group">
+          <label>RPM Limit</label>
+          <input type="number" id="ep-rpm" placeholder="Unlimited" min="0">
+        </div>
+        <div class="form-group">
+          <label>TPM Limit</label>
+          <input type="number" id="ep-tpm" placeholder="Unlimited" min="0">
+        </div>
+        <!-- Cost per token -->
+        <div class="form-group">
+          <label>Cost/1M input tokens (USD)</label>
+          <input type="number" id="ep-costIn" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Cost/1M output tokens (USD)</label>
+          <input type="number" id="ep-costOut" placeholder="0.00" min="0" step="0.01">
+        </div>
+      </div>
+
+      <!-- API Key Management -->
+      <div style="margin-bottom:1rem;">
+        <label style="margin-bottom:.5rem;display:block;">API Keys (masked after save)</label>
+        <div class="key-list" id="editKeyList"></div>
+        <div class="add-key-row">
+          <input type="password" id="newKeyInput" placeholder="Add new API key…" autocomplete="off">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="addKeyToEdit()">+ Add</button>
+        </div>
+        <div class="form-hint">Keys are shown masked. Adding a new key appends to the pool. Empty slot = key removed.</div>
+      </div>
+
+      <!-- Model Management -->
+      <div style="margin-bottom:1rem;">
+        <label style="margin-bottom:.5rem;display:block;">Models</label>
+        <div class="key-list" id="editModelList"></div>
+        <div class="add-key-row">
+          <input type="text" id="newModelId" placeholder="model-id (e.g. gpt-4o)" style="flex:1.2" autocomplete="off">
+          <input type="text" id="newModelAlias" placeholder="alias (optional)" style="flex:1" autocomplete="off">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="addModelToEdit()">+ Add</button>
+        </div>
+        <div class="form-hint">Model ID is what the provider API expects. Alias is what clients send as <code>model=</code>. Leave alias blank to use the ID.</div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="editSubmitBtn">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast" id="toastContainer"></div>
+
+<script>
+function initTheme(){if(localStorage.getItem('llmux_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');else document.documentElement.removeAttribute('data-theme');}function toggleTheme(){const d=document.documentElement.hasAttribute('data-theme');if(d){document.documentElement.removeAttribute('data-theme');localStorage.setItem('llmux_theme','light');}else{document.documentElement.setAttribute('data-theme','dark');localStorage.setItem('llmux_theme','dark');}}initTheme();
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+const TOKEN = localStorage.getItem('llmux_token') ?? '';
+
+async function authFetch(url, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...opts.headers };
+  if (TOKEN) headers['Authorization'] = `Bearer ${TOKEN}`;
+  const res = await fetch(url, { ...opts, headers, credentials: 'include' });
+  if (res.status === 401) { window.location.href = '/login?returnTo=/settings'; return res; }
+  return res;
+}
+
+(async () => {
+  if (!TOKEN) { window.location.href = '/login?returnTo=/settings'; return; }
+  try {
+    const r = await authFetch('/api/admin/me');
+    if (!r.ok) { window.location.href = '/login?returnTo=/settings'; return; }
+    const me = await r.json();
+    document.getElementById('adminName').textContent = me.username;
+  } catch { window.location.href = '/login?returnTo=/settings'; }
+  loadProviders();
+  loadSettings();
+  loadGatewayKeys();
+})();
+
+async function logout() {
+  await fetch('/api/admin/logout', { method: 'POST', credentials: 'include' });
+  localStorage.removeItem('llmux_token');
+  window.location.href = '/login';
+}
+
+// ── Section navigation ────────────────────────────────────────────────────────
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+  document.getElementById('section-' + name)?.classList.add('active');
+  document.getElementById('nav-' + name)?.classList.add('active');
+  if (name === 'add-provider') initAddForm();
+}
+
+// ── Toast notifications ───────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const c = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = `toast-item toast-${type}`;
+  el.textContent = msg;
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+// ── Provider list ─────────────────────────────────────────────────────────────
+let allProviders = [];
+
+async function loadProviders() {
+  document.getElementById('providersLoading').style.display = 'flex';
+  try {
+    const r = await authFetch('/api/admin/providers');
+    if (!r.ok) return;
+    const d = await r.json();
+    allProviders = d.providers;
+    document.getElementById('cnt-providers').textContent = allProviders.length;
+    renderProviders(allProviders);
+  } finally {
+    document.getElementById('providersLoading').style.display = 'none';
+  }
+}
+
+function filterProviders() {
+  const q = document.getElementById('providerSearch').value.toLowerCase();
+  const mod = document.getElementById('modalityFilter').value;
+  const tier = document.getElementById('tierFilter').value;
+  const filtered = allProviders.filter(p =>
+    (!q || p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q)) &&
+    (!mod || p.modality === mod) &&
+    (!tier || String(p.tier) === tier)
+  );
+  renderProviders(filtered);
+}
+
+// ── Provider API Key page URLs ─────────────────────────────────────────────
+const PROVIDER_KEY_URLS = {
+  'api.groq.com':                        'https://console.groq.com/keys',
+  'api.cerebras.ai':                     'https://cloud.cerebras.ai/platform',
+  'generativelanguage.googleapis.com':   'https://aistudio.google.com/apikey',
+  'api.mistral.ai':                      'https://console.mistral.ai/api-keys',
+  'openrouter.ai':                       'https://openrouter.ai/settings/keys',
+  'api.cloudflare.com':                  'https://dash.cloudflare.com/profile/api-tokens',
+  'api-inference.huggingface.co':        'https://huggingface.co/settings/tokens',
+  'api.sambanova.ai':                    'https://cloud.sambanova.ai/apis',
+  'api.cohere.com':                      'https://dashboard.cohere.com/api-keys',
+  'api.deepseek.com':                    'https://platform.deepseek.com/api_keys',
+  'integrate.api.nvidia.com':            'https://build.nvidia.com/settings/api-key',
+  'models.inference.ai.azure.com':       'https://github.com/settings/tokens',
+  'gen.pollinations.ai':                 'https://enter.pollinations.ai/',
+  'api.together.xyz':                    'https://api.together.xyz/settings/api-keys',
+  'fal.run':                             'https://fal.ai/dashboard/keys',
+  'api.elevenlabs.io':                   'https://elevenlabs.io/app/settings/api-keys',
+  'api.deepgram.com':                    'https://console.deepgram.com/',
+  'api.fish.audio':                      'https://fish.audio/go-api/',
+  'api.replicate.com':                   'https://replicate.com/account/api-tokens',
+  'api.openai.com':                      'https://platform.openai.com/api-keys',
+  'api.anthropic.com':                   'https://console.anthropic.com/settings/keys',
+  'api.moonshot.cn':                     'https://platform.moonshot.cn/console/api-keys',
+  'open.bigmodel.cn':                    'https://open.bigmodel.cn/usercenter/apikeys',
+  'api.x.ai':                            'https://console.x.ai/',
+};
+
+function getProviderKeyUrl(baseUrl) {
+  try {
+    const hostname = new URL(baseUrl).hostname;
+    return PROVIDER_KEY_URLS[hostname] ?? null;
+  } catch { return null; }
+}
+
+function renderProviders(providers) {
+  const tbody = document.getElementById('providersBody');
+  if (!providers.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="icon">🔌</div>No providers found</div></td></tr>`;
+    return;
+  }
+  const sorted = [...providers].sort((a, b) => {
+    const aHasKey = (a.apiKeys?.length || 0) > 0 ? 0 : 1;
+    const bHasKey = (b.apiKeys?.length || 0) > 0 ? 0 : 1;
+    if (aHasKey !== bHasKey) return aHasKey - bHasKey;
+    return (a.tier ?? 9) - (b.tier ?? 9);
+  });
+  tbody.innerHTML = sorted.map(p => `
+    <tr data-id="${esc(p.id)}">
+      <td>
+        <div class="provider-name">${esc(p.name)}</div>
+        <div class="provider-id">${esc(p.id)}</div>
+      </td>
+      <td><span class="modality-badge modality-${esc(p.modality)}">${esc(p.modality)}</span></td>
+      <td><span class="tier-badge tier-${p.tier}">${p.tier}</span></td>
+      <td><span class="key-count">${p.apiKeys?.length || 0} key${p.apiKeys?.length !== 1 ? 's' : ''}</span></td>
+      <td>
+        <div class="tag-list">${(p.models || []).slice(0, 3).map(m => `<span class="tag">${esc(m.id)}</span>`).join('')}${(p.models?.length || 0) > 3 ? `<span class="tag">+${p.models.length-3}</span>` : ''}</div>
+      </td>
+      <td>${(() => {
+          const hasKey = (p.apiKeys?.length || 0) > 0;
+          const needsKey = p.requiresAuth !== false;
+          if (!p.enabled) return '<span class="status-dot status-off"></span>Disabled';
+          if (needsKey && !hasKey) return '<span class="status-dot status-off"></span><span style="color:var(--text-muted)">No API Key</span>';
+          return '<span class="status-dot status-unknown"></span>Active';
+        })()}</td>
+      <td>
+        <label class="toggle">
+          <input type="checkbox" ${p.enabled ? 'checked' : ''} onchange="toggleProvider('${esc(p.id)}', this.checked)">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </td>
+      <td class="actions-cell">
+        <button class="btn btn-secondary btn-sm" onclick="openEditModal('${esc(p.id)}')">Edit</button>
+        <button class="btn btn-secondary btn-sm" onclick="testProvider('${esc(p.id)}', this)" title="Test connectivity">Ping</button>
+        ${(() => { const u = p.baseUrl ? getProviderKeyUrl(p.baseUrl) : null; return u ? `<a href="${u}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" title="Get API key for ${esc(p.name)}">🔑 Get Key</a>` : ''; })()}
+        ${p._source !== 'yaml' ? `<button class="btn btn-danger btn-sm" onclick="confirmDeleteProvider('${esc(p.id)}')">Delete</button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function toggleProvider(id, enabled) {
+  const r = await authFetch(`/api/admin/providers/${encodeURIComponent(id)}`, {
+    method: 'PUT', body: JSON.stringify({ enabled }),
+  });
+  if (r.ok) {
+    const p = allProviders.find(p => p.id === id);
+    if (p) p.enabled = enabled;
+    toast(enabled ? `${id} enabled` : `${id} disabled`);
+  } else {
+    toast('Failed to update provider', 'error');
+    loadProviders();
+  }
+}
+
+async function testProvider(id, btn) {
+  const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = '…';
+  const r = await authFetch(`/api/admin/providers/${encodeURIComponent(id)}/test`, { method: 'POST' });
+  const d = await r.json();
+  btn.disabled = false; btn.textContent = orig;
+  if (d.healthy) toast(`${id} is healthy ✓`, 'success');
+  else toast(`${id} ping failed: ${d.error ?? 'unhealthy'}`, 'error');
+}
+
+async function confirmDeleteProvider(id) {
+  if (!confirm(`Delete provider "${id}"? This cannot be undone.`)) return;
+  const r = await authFetch(`/api/admin/providers/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  if (r.ok) { toast('Provider deleted'); loadProviders(); }
+  else toast('Failed to delete provider', 'error');
+}
+
+// ── Quick Presets ──────────────────────────────────────────────────────────────
+const PRESETS = [
+  { label: '☁ OpenAI', id: 'openai', name: 'OpenAI', modality: 'text', baseUrl: 'https://api.openai.com/v1', adapter: 'openai', tier: 2, models: 'gpt-4o\ngpt-4o-mini\no3\no4-mini', costIn: 2.5, costOut: 10 },
+  { label: '🟣 Anthropic', id: 'anthropic', name: 'Anthropic', modality: 'text', baseUrl: 'https://api.anthropic.com/v1', adapter: 'custom', tier: 2, models: 'claude-opus-4-5\nclaude-sonnet-4-5\nclaude-haiku-3-5', costIn: 3, costOut: 15 },
+  { label: '🌐 OpenRouter', id: 'openrouter-paid', name: 'OpenRouter (Paid)', modality: 'text', baseUrl: 'https://openrouter.ai/api/v1', adapter: 'openai', tier: 2, models: 'anthropic/claude-3.5-sonnet\ngoogle/gemini-2.5-pro\nopenai/gpt-4o', costIn: 0, costOut: 0 },
+  { label: '⚡ Groq', id: 'groq-paid', name: 'Groq', modality: 'text', baseUrl: 'https://api.groq.com/openai/v1', adapter: 'openai', tier: 3, models: 'llama-3.3-70b-versatile\nllama-4-scout-17b\nqwen-qwq-32b' },
+  { label: '🔥 Together AI', id: 'together-text', name: 'Together AI', modality: 'text', baseUrl: 'https://api.together.xyz/v1', adapter: 'openai', tier: 2, models: 'meta-llama/Llama-3.3-70B-Instruct-Turbo\nmistralai/Mixtral-8x7B-Instruct-v0.1' },
+  { label: '💎 Gemini', id: 'gemini-pro', name: 'Google Gemini', modality: 'text', baseUrl: 'https://generativelanguage.googleapis.com/v1beta', adapter: 'gemini', tier: 2, models: 'gemini-2.5-pro\ngemini-2.0-flash', costIn: 1.25, costOut: 5 },
+];
+
+document.getElementById('presetsContainer').innerHTML = PRESETS.map((p, i) =>
+  `<button type="button" class="btn btn-secondary" onclick="fillPreset(${i})">${p.label}</button>`
+).join('');
+
+function fillPreset(i) {
+  const p = PRESETS[i];
+  document.getElementById('np-name').value = p.name;
+  document.getElementById('np-baseUrl').value = p.baseUrl;
+  // advanced fields
+  document.getElementById('np-id').value = p.id;
+  document.getElementById('np-modality').value = p.modality;
+  document.getElementById('np-tier').value = String(p.tier);
+  document.getElementById('np-adapter').value = p.adapter;
+  document.getElementById('np-costIn').value = p.costIn ?? '';
+  document.getElementById('np-costOut').value = p.costOut ?? '';
+  // reset and fill model list
+  document.getElementById('np-model-list').innerHTML = '';
+  (p.models ?? '').split('\n').filter(Boolean).forEach(m => addModelRow('np-model-list', m));
+  // reset key list and add one empty slot ready to type
+  document.getElementById('np-key-list').innerHTML = '';
+  addKeyRow('np-key-list');
+  showSection('add-provider');
+  setTimeout(() => document.getElementById('np-key-list').querySelector('input')?.focus(), 50);
+}
+
+async function submitAddProvider(e) {
+  e.preventDefault();
+  const btn = document.getElementById('addSubmitBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const apiKeysRaw = getListValues('np-key-list');
+  const modelsRaw = getListValues('np-model-list');
+  const models = modelsRaw.length ? modelsRaw.map(l => {
+    const [id, alias] = l.split(':');
+    return alias ? { id: id.trim(), alias: alias.trim() } : { id: l.trim() };
+  }) : [{ id: 'default' }];
+
+  const body = {
+    id: document.getElementById('np-id').value.trim(),
+    name: document.getElementById('np-name').value.trim(),
+    modality: document.getElementById('np-modality').value,
+    tier: Number(document.getElementById('np-tier').value),
+    baseUrl: document.getElementById('np-baseUrl').value.trim(),
+    adapter: document.getElementById('np-adapter').value,
+    apiKeys: apiKeysRaw,
+    models,
+    enabled: true,
+    requiresAuth: apiKeysRaw.length > 0,
+    limits: {
+      rpm: Number(document.getElementById('np-rpm').value) || undefined,
+      rpd: Number(document.getElementById('np-rpd').value) || undefined,
+      tpm: Number(document.getElementById('np-tpm').value) || undefined,
+    },
+    concurrency: Number(document.getElementById('np-concurrency').value) || 5,
+    costPerMToken: (document.getElementById('np-costIn').value || document.getElementById('np-costOut').value) ? {
+      input: Number(document.getElementById('np-costIn').value) || 0,
+      output: Number(document.getElementById('np-costOut').value) || 0,
+    } : undefined,
+  };
+
+  const r = await authFetch('/api/admin/providers', { method: 'POST', body: JSON.stringify(body) });
+  const d = await r.json();
+  btn.disabled = false; btn.textContent = 'Save Provider';
+
+  if (r.ok) {
+    toast(`Provider "${body.id}" added!`);
+    document.getElementById('addProviderForm').reset();
+    document.getElementById('np-key-list').innerHTML = '';
+    document.getElementById('np-model-list').innerHTML = '';
+    loadProviders();
+    showSection('providers');
+  } else {
+    toast(d.error?.message ?? 'Failed to add provider', 'error');
+  }
+}
+
+// ── Add Provider helpers ──────────────────────────────────────────────────────
+function autoFillId(name) {
+  const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  document.getElementById('np-id').value = id;
+}
+
+function initAddForm() {
+  const kl = document.getElementById('np-key-list');
+  const ml = document.getElementById('np-model-list');
+  if (kl && !kl.children.length) addKeyRow('np-key-list');
+  if (ml && !ml.children.length) addModelRow('np-model-list');
+}
+
+function addKeyRow(containerId, value = '') {
+  const list = document.getElementById(containerId);
+  const n = list.children.length + 1;
+  const row = document.createElement('div');
+  row.className = 'dynamic-row';
+  row.innerHTML = `
+    <div class="row-badge">${n}</div>
+    <input type="password" placeholder="API key #${n}  (sk-…)" autocomplete="off" value="${esc(value)}">
+    <button type="button" class="btn btn-secondary btn-sm" onclick="removeRow(this, '${containerId}')" title="Remove">✕</button>
+  `;
+  list.appendChild(row);
+}
+
+function addModelRow(containerId, value = '') {
+  const list = document.getElementById(containerId);
+  const n = list.children.length + 1;
+  const row = document.createElement('div');
+  row.className = 'dynamic-row';
+  const ph = n === 1 ? 'primary-model-id  (e.g. gpt-4o or gpt-4o:gpt4)' : `model-id #${n}  or  model-id:alias`;
+  row.innerHTML = `
+    <div class="row-badge">${n}</div>
+    <input type="text" placeholder="${ph}" value="${esc(value)}">
+    <button type="button" class="btn btn-secondary btn-sm" onclick="removeRow(this, '${containerId}')" title="Remove">✕</button>
+  `;
+  list.appendChild(row);
+}
+
+function removeRow(btn, containerId) {
+  btn.closest('.dynamic-row').remove();
+  renumberRows(containerId);
+}
+
+function renumberRows(containerId) {
+  const list = document.getElementById(containerId);
+  if (!list) return;
+  list.querySelectorAll('.dynamic-row').forEach((row, i) => {
+    const badge = row.querySelector('.row-badge');
+    if (badge) badge.textContent = i + 1;
+  });
+}
+
+function getListValues(containerId) {
+  return Array.from(document.getElementById(containerId)?.querySelectorAll('input') ?? [])
+    .map(i => i.value.trim()).filter(Boolean);
+}
+
+// ── Edit Modal ────────────────────────────────────────────────────────────────
+let editingId = null;
+let editKeys = [];
+
+async function openEditModal(id) {
+  editingId = id;
+  const p = allProviders.find(p => p.id === id);
+  if (!p) return;
+
+  document.getElementById('editModalTitle').textContent = `Edit — ${p.name}`;
+  document.getElementById('ep-name').value = p.name;
+  document.getElementById('ep-tier').value = String(p.tier);
+  document.getElementById('ep-baseUrl').value = p.baseUrl;
+  document.getElementById('ep-adapter').value = p.adapter ?? 'openai';
+  document.getElementById('ep-concurrency').value = p.concurrency ?? 5;
+  document.getElementById('ep-timeout').value = p.timeout ?? 30000;
+  document.getElementById('ep-rpm').value = p.limits?.rpm ?? '';
+  document.getElementById('ep-tpm').value = p.limits?.tpm ?? '';
+  document.getElementById('ep-costIn').value = p.costPerMToken?.input ?? '';
+  document.getElementById('ep-costOut').value = p.costPerMToken?.output ?? '';
+
+  editKeys = [...(p.apiKeys ?? [])];
+  renderEditKeys();
+  document.getElementById('newKeyInput').value = '';
+
+  editModels = (p.models ?? []).map(m => ({ id: m.id, alias: m.alias ?? '' }));
+  renderEditModels();
+  document.getElementById('newModelId').value = '';
+  document.getElementById('newModelAlias').value = '';
+  document.getElementById('editModal').classList.remove('hidden');
+}
+
+function renderEditKeys() {
+  const list = document.getElementById('editKeyList');
+  list.innerHTML = editKeys.map((k, i) => `
+    <div class="key-item">
+      <span class="key-val" title="${esc(k)}">${esc(k)}</span>
+      <button type="button" class="btn btn-danger btn-sm" onclick="removeEditKey(${i})">✕</button>
+    </div>
+  `).join('') || '<div style="color:var(--text-dim);font-size:.8rem;padding:.25rem 0;">No keys configured</div>';
+}
+
+function removeEditKey(i) { editKeys.splice(i, 1); renderEditKeys(); }
+function addKeyToEdit() {
+  const val = document.getElementById('newKeyInput').value.trim();
+  if (!val) return;
+  editKeys.push(val);
+  renderEditKeys();
+  document.getElementById('newKeyInput').value = '';
+}
+
+let editModels = [];
+function renderEditModels() {
+  const list = document.getElementById('editModelList');
+  if (!editModels.length) {
+    list.innerHTML = '<div style="color:var(--text-dim);font-size:.8rem;padding:.25rem 0;">No models configured</div>';
+    return;
+  }
+  list.innerHTML = editModels.map((m, i) => `
+    <div class="key-item">
+      <span class="key-val" style="font-family:var(--mono);font-size:.78rem;" title="id: ${esc(m.id)}">${esc(m.id)}${m.alias && m.alias !== m.id ? ` <span style="opacity:.55;font-size:.72rem">→ ${esc(m.alias)}</span>` : ''}</span>
+      <button type="button" class="btn btn-danger btn-sm" onclick="removeEditModel(${i})">&#x2715;</button>
+    </div>
+  `).join('');
+}
+function removeEditModel(i) { editModels.splice(i, 1); renderEditModels(); }
+function addModelToEdit() {
+  const id = document.getElementById('newModelId').value.trim();
+  const alias = document.getElementById('newModelAlias').value.trim();
+  if (!id) return;
+  editModels.push({ id, alias: alias || id });
+  renderEditModels();
+  document.getElementById('newModelId').value = '';
+  document.getElementById('newModelAlias').value = '';
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.add('hidden');
+  editingId = null; editKeys = []; editModels = [];
+}
+
+async function submitEditProvider(e) {
+  e.preventDefault();
+  if (!editingId) return;
+  const btn = document.getElementById('editSubmitBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const body = {
+    name: document.getElementById('ep-name').value.trim(),
+    tier: Number(document.getElementById('ep-tier').value),
+    baseUrl: document.getElementById('ep-baseUrl').value.trim(),
+    adapter: document.getElementById('ep-adapter').value,
+    concurrency: Number(document.getElementById('ep-concurrency').value) || 5,
+    timeout: Number(document.getElementById('ep-timeout').value) || 30000,
+    apiKeys: editKeys,
+    models: editModels.map(m => ({ id: m.id, alias: m.alias || m.id })),
+    limits: {
+      rpm: Number(document.getElementById('ep-rpm').value) || undefined,
+      tpm: Number(document.getElementById('ep-tpm').value) || undefined,
+    },
+    costPerMToken: (document.getElementById('ep-costIn').value || document.getElementById('ep-costOut').value) ? {
+      input: Number(document.getElementById('ep-costIn').value) || 0,
+      output: Number(document.getElementById('ep-costOut').value) || 0,
+    } : undefined,
+  };
+
+  const r = await authFetch(`/api/admin/providers/${encodeURIComponent(editingId)}`, {
+    method: 'PUT', body: JSON.stringify(body),
+  });
+  const d = await r.json();
+  btn.disabled = false; btn.textContent = 'Save Changes';
+
+  if (r.ok) {
+    toast('Provider updated');
+    closeEditModal();
+    loadProviders();
+  } else {
+    toast(d.error?.message ?? 'Save failed', 'error');
+  }
+}
+
+// ── Router Settings ───────────────────────────────────────────────────────────
+async function loadSettings() {
+  const r = await authFetch('/api/admin/settings');
+  if (!r.ok) return;
+  const d = await r.json();
+  document.getElementById('rt-strategy').value = d.router?.default_strategy ?? 'priority';
+  document.getElementById('rt-fallback').value = String(d.router?.fallback_enabled ?? true);
+  document.getElementById('rt-maxFallback').value = d.router?.max_fallback_attempts ?? 5;
+  document.getElementById('gw-maxSize').value = d.gateway?.max_request_size_mb ?? 10;
+  document.getElementById('gw-timeout').value = d.gateway?.request_timeout_ms ?? 60000;
+  document.getElementById('gw-logging').value = String(d.gateway?.enable_request_logging ?? true);
+}
+
+async function saveRouting(e) {
+  e.preventDefault();
+  const body = {
+    router: {
+      default_strategy: document.getElementById('rt-strategy').value,
+      fallback_enabled: document.getElementById('rt-fallback').value === 'true',
+      max_fallback_attempts: Number(document.getElementById('rt-maxFallback').value),
+    },
+  };
+  const r = await authFetch('/api/admin/settings', { method: 'PUT', body: JSON.stringify(body) });
+  if (r.ok) toast('Router strategy saved'); else toast('Save failed', 'error');
+}
+
+async function saveGateway(e) {
+  e.preventDefault();
+  const body = {
+    gateway: {
+      max_request_size_mb: Number(document.getElementById('gw-maxSize').value),
+      request_timeout_ms: Number(document.getElementById('gw-timeout').value),
+      enable_request_logging: document.getElementById('gw-logging').value === 'true',
+    },
+  };
+  const r = await authFetch('/api/admin/settings', { method: 'PUT', body: JSON.stringify(body) });
+  if (r.ok) toast('Gateway settings saved'); else toast('Save failed', 'error');
+}
+
+// ── Gateway API Keys ──────────────────────────────────────────────────────────
+
+async function loadGatewayKeys() {
+  try {
+    const r = await authFetch('/api/admin/gateway-key');
+    if (!r.ok) return;
+    const d = await r.json();
+    renderGatewayKeys(d.keys || [], d.envKeyActive || false);
+  } catch { /* ignore */ }
+}
+
+function renderGatewayKeys(keys, envKeyActive) {
+  const notice = document.getElementById('gwkey-env-notice');
+  notice.style.display = envKeyActive ? 'block' : 'none';
+
+  const tbody = document.getElementById('gwkey-tbody');
+  if (!keys.length) {
+    tbody.innerHTML = `<tr id="gwkey-empty-row"><td colspan="4" style="text-align:center;padding:1.5rem;color:var(--text-muted);font-size:.85rem;">No gateway keys yet — all requests are allowed without auth.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = keys.map(k => `
+    <tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:.6rem .75rem;font-weight:600;">${escHtml(k.name)}</td>
+      <td style="padding:.6rem .75rem;font-family:monospace;font-size:.82rem;color:var(--text-muted);">${escHtml(k.hint)}</td>
+      <td style="padding:.6rem .75rem;font-size:.8rem;color:var(--text-muted);">${new Date(k.createdAt).toLocaleDateString()}</td>
+      <td style="padding:.6rem .75rem;text-align:right;">
+        <button class="btn btn-danger btn-sm" onclick="deleteGwKey('${k.id}', '${escHtml(k.name)}')">Revoke</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function openNewKeyModal() {
+  document.getElementById('nk-name').value = '';
+  document.getElementById('nk-value').textContent = '';
+  document.getElementById('nk-reveal').style.display = 'none';
+  document.getElementById('nk-actions').style.display = 'flex';
+  document.getElementById('nk-done-actions').style.display = 'none';
+  document.getElementById('nk-submit-btn').disabled = false;
+  document.getElementById('nk-submit-btn').textContent = 'Generate Key';
+  document.getElementById('newKeyModal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('nk-name').focus(), 50);
+}
+
+function closeNewKeyModal() {
+  document.getElementById('newKeyModal').classList.add('hidden');
+  loadGatewayKeys();
+}
+
+async function submitNewKey(e) {
+  e.preventDefault();
+  const name = document.getElementById('nk-name').value.trim();
+  if (!name) { toast('Enter a key name', 'error'); return; }
+
+  const btn = document.getElementById('nk-submit-btn');
+  btn.disabled = true; btn.textContent = 'Generating…';
+
+  const r = await authFetch('/api/admin/gateway-key', {
+    method: 'POST', body: JSON.stringify({ name }),
+  });
+  const d = await r.json();
+
+  if (!r.ok) {
+    btn.disabled = false; btn.textContent = 'Generate Key';
+    toast(d.error?.message || 'Failed to create key', 'error');
+    return;
+  }
+
+  // Show the key ONE TIME
+  document.getElementById('nk-value').textContent = d.key;
+  document.getElementById('nk-reveal').style.display = 'block';
+  document.getElementById('nk-actions').style.display = 'none';
+  document.getElementById('nk-done-actions').style.display = 'flex';
+}
+
+function copyNewKey() {
+  const val = document.getElementById('nk-value').textContent;
+  navigator.clipboard.writeText(val).then(() => toast('Key copied to clipboard'));
+}
+
+async function deleteGwKey(id, name) {
+  if (!confirm(`Revoke key "${name}"? This cannot be undone and any clients using it will get 401 errors.`)) return;
+  const r = await authFetch(`/api/admin/gateway-key/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  if (r.ok) {
+    toast(`Key "${name}" revoked`);
+    loadGatewayKeys();
+  } else {
+    const d = await r.json().catch(() => ({}));
+    toast(d.error?.message || 'Failed to revoke key', 'error');
+  }
+}
+
+// ── Change Password ───────────────────────────────────────────────────────────
+async function changePassword(e) {
+  e.preventDefault();
+  const cur = document.getElementById('cur-pw').value;
+  const nw = document.getElementById('new-pw').value;
+  const conf = document.getElementById('confirm-pw').value;
+  if (nw !== conf) { toast('Passwords do not match', 'error'); return; }
+  if (nw.length < 8) { toast('Password must be at least 8 characters', 'error'); return; }
+
+  const r = await authFetch('/api/admin/change-password', {
+    method: 'POST', body: JSON.stringify({ currentPassword: cur, newPassword: nw }),
+  });
+  const d = await r.json();
+  if (r.ok) {
+    toast('Password changed. Please log in again.');
+    setTimeout(() => { localStorage.removeItem('llmux_token'); window.location.href = '/login'; }, 2000);
+  } else {
+    toast(d.error?.message ?? 'Failed to change password', 'error');
+  }
+}
+</script>
+</body>
+</html>

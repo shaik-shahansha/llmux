@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLMux — First-time Setup</title>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --accent: #58a6ff; --accent-hover: #79c0ff;
+    --success: #3fb950; --error: #f85149; --warning: #d29922;
+    --text: #e6edf3; --text-muted: #8b949e;
+    --input-bg: #0d1117; --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 2.5rem; width: 100%; max-width: 440px; box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  }
+  .logo { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.5rem; }
+  .logo-icon { width: 40px; height: 40px; background: var(--accent); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700; color: #000; }
+  .logo h1 { font-size: 1.4rem; font-weight: 600; }
+  .subtitle { color: var(--text-muted); font-size: .875rem; margin-bottom: 2rem; line-height: 1.5; }
+  .badge { display: inline-block; background: #1f2937; border: 1px solid var(--warning); color: var(--warning);
+    border-radius: 4px; padding: 2px 8px; font-size: .75rem; margin-bottom: .75rem; }
+  .form-group { margin-bottom: 1.25rem; }
+  label { display: block; font-size: .875rem; font-weight: 500; margin-bottom: .5rem; color: var(--text-muted); }
+  input[type="text"], input[type="password"] {
+    width: 100%; padding: .65rem .875rem; background: var(--input-bg); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text); font-size: .9rem; outline: none;
+    transition: border-color .15s;
+  }
+  input:focus { border-color: var(--accent); }
+  .strength-bar { height: 3px; border-radius: 2px; margin-top: .4rem; background: var(--border); overflow: hidden; }
+  .strength-fill { height: 100%; transition: width .3s, background .3s; width: 0%; }
+  .strength-label { font-size: .75rem; margin-top: .25rem; }
+  .requirements { font-size: .75rem; color: var(--text-muted); margin-top: .4rem; }
+  .btn {
+    width: 100%; padding: .75rem; background: var(--accent); color: #000; border: none;
+    border-radius: var(--radius); font-size: .95rem; font-weight: 600; cursor: pointer;
+    transition: background .15s, opacity .15s;
+  }
+  .btn:hover:not(:disabled) { background: var(--accent-hover); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .alert { padding: .75rem 1rem; border-radius: var(--radius); font-size: .875rem; margin-bottom: 1rem; display: none; }
+  .alert-error { background: rgba(248,81,73,.1); border: 1px solid var(--error); color: var(--error); }
+  .alert-success { background: rgba(63,185,80,.1); border: 1px solid var(--success); color: var(--success); }
+  .spin { animation: spin .8s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .footer-note { text-align: center; margin-top: 1.5rem; font-size: .8rem; color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">L</div>
+    <h1>LLMux</h1>
+  </div>
+  <span class="badge">⚙ First-time Setup</span>
+  <p class="subtitle">Create your admin account to access the dashboard and manage providers. This can only be done once.</p>
+
+  <div class="alert alert-error" id="errorMsg"></div>
+  <div class="alert alert-success" id="successMsg"></div>
+
+  <form id="setupForm">
+    <div class="form-group">
+      <label for="username">Admin Username</label>
+      <input type="text" id="username" placeholder="admin" autocomplete="username" minlength="3" required>
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="At least 8 characters" autocomplete="new-password" required>
+      <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+      <div class="strength-label" id="strengthLabel"></div>
+    </div>
+    <div class="form-group">
+      <label for="confirm">Confirm Password</label>
+      <input type="password" id="confirm" placeholder="Repeat password" autocomplete="new-password" required>
+      <div class="requirements" id="matchHint"></div>
+    </div>
+    <button type="submit" class="btn" id="submitBtn">Create Admin Account</button>
+  </form>
+
+  <p class="footer-note">Credentials are stored hashed with scrypt (N=16384). Only you can reset by deleting config/admin.json.</p>
+</div>
+
+<script>
+  const pw = document.getElementById('password');
+  const confirm = document.getElementById('confirm');
+  const fill = document.getElementById('strengthFill');
+  const label = document.getElementById('strengthLabel');
+  const match = document.getElementById('matchHint');
+  const btn = document.getElementById('submitBtn');
+
+  function scorePassword(p) {
+    let s = 0;
+    if (p.length >= 8) s++;
+    if (p.length >= 12) s++;
+    if (/[A-Z]/.test(p)) s++;
+    if (/[0-9]/.test(p)) s++;
+    if (/[^A-Za-z0-9]/.test(p)) s++;
+    return s;
+  }
+
+  pw.addEventListener('input', () => {
+    const s = scorePassword(pw.value);
+    const pct = (s / 5) * 100;
+    fill.style.width = pct + '%';
+    const colors = ['#f85149','#f85149','#d29922','#3fb950','#79c0ff'];
+    const labels = ['','Very weak','Weak','Fair','Strong','Very strong'];
+    fill.style.background = colors[Math.max(0, s-1)] || '#333';
+    label.textContent = labels[s] || '';
+    label.style.color = colors[Math.max(0, s-1)] || '#8b949e';
+    checkMatch();
+  });
+
+  confirm.addEventListener('input', checkMatch);
+
+  function checkMatch() {
+    if (!confirm.value) { match.textContent = ''; return; }
+    if (pw.value === confirm.value) {
+      match.textContent = '✓ Passwords match';
+      match.style.color = '#3fb950';
+    } else {
+      match.textContent = '✗ Passwords do not match';
+      match.style.color = '#f85149';
+    }
+  }
+
+  document.getElementById('setupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const err = document.getElementById('errorMsg');
+    const ok = document.getElementById('successMsg');
+    err.style.display = 'none'; ok.style.display = 'none';
+
+    const username = document.getElementById('username').value.trim();
+    const password = pw.value;
+
+    if (password !== confirm.value) {
+      err.textContent = 'Passwords do not match.';
+      err.style.display = 'block';
+      return;
+    }
+    if (password.length < 8) {
+      err.textContent = 'Password must be at least 8 characters.';
+      err.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin">⟳</span> Creating account...';
+
+    try {
+      const res = await fetch('/api/admin/setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        err.textContent = data.error?.message ?? 'Setup failed.';
+        err.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Create Admin Account';
+        return;
+      }
+
+      ok.textContent = '✓ Account created! Redirecting to login...';
+      ok.style.display = 'block';
+      setTimeout(() => { window.location.href = '/login'; }, 1500);
+    } catch {
+      err.textContent = 'Network error — is the server running?';
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Create Admin Account';
+    }
+  });
+</script>
+</body>
+</html>

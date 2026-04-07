@@ -1,0 +1,83 @@
+version: "3.9"
+
+services:
+  # ── LLMux Gateway ──────────────────────────────────────────────────────────
+  llmux:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: llmux:latest
+    container_name: llmux
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      REDIS_URL: redis://redis:6379
+      GATEWAY_API_KEY: ${GATEWAY_API_KEY:-}
+      PROVIDERS_CONFIG_PATH: config/providers.yaml
+
+      # Text providers
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      CEREBRAS_API_KEY: ${CEREBRAS_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      MISTRAL_API_KEY: ${MISTRAL_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      CLOUDFLARE_API_KEY: ${CLOUDFLARE_API_KEY:-}
+      CLOUDFLARE_ACCOUNT_ID: ${CLOUDFLARE_ACCOUNT_ID:-}
+      HUGGINGFACE_API_KEY: ${HUGGINGFACE_API_KEY:-}
+      SAMBANOVA_API_KEY: ${SAMBANOVA_API_KEY:-}
+      COHERE_API_KEY: ${COHERE_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      NVIDIA_NIM_API_KEY: ${NVIDIA_NIM_API_KEY:-}
+      GITHUB_MODELS_API_KEY: ${GITHUB_MODELS_API_KEY:-}
+
+      # Image providers
+      TOGETHER_API_KEY: ${TOGETHER_API_KEY:-}
+      FAL_API_KEY: ${FAL_API_KEY:-}
+
+      # Audio providers
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY:-}
+      FISH_AUDIO_API_KEY: ${FISH_AUDIO_API_KEY:-}
+    volumes:
+      - ./config:/app/config:ro
+      - ./dashboard:/app/dashboard:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - llmux-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── Redis (rate limit state) ─────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: llmux-redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - llmux-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  redis-data:
+
+networks:
+  llmux-net:
+    driver: bridge

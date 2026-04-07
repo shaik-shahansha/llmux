@@ -1,0 +1,19 @@
+node_modules
+dist
+.env
+.env.*
+!.env.example
+*.log
+.git
+.gitignore
+tests
+*.test.ts
+README.md
+CONTRIBUTING.md
+coverage
+*.tsbuildinfo
+
+# Admin secrets — generated at runtime, not needed in image
+config/admin.json
+config/providers-dynamic.json
+config/gateway-settings.json

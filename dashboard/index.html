@@ -1,0 +1,622 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LLMux Dashboard</title>
+  <style>
+    /* ── Light theme (default) ── */
+    :root {
+      --bg: #f6f8fa;
+      --bg2: #ffffff;
+      --bg3: #f0f2f5;
+      --surface: #ffffff;
+      --border: #d0d7de;
+      --border2: #c8d0d8;
+      --text: #1f2328;
+      --text-muted: #57606a;
+      --accent: #0550ae;
+      --accent2: #0969da;
+      --green: #1a7f37;
+      --yellow: #9a6700;
+      --red: #cf222e;
+      --blue: #0969da;
+      --orange: #bc4c00;
+      --mono: 'JetBrains Mono', 'Cascadia Code', monospace;
+      --r: 8px;
+      --card-shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+      --header-bg: #ffffff;
+    }
+    /* ── Dark theme ── */
+    html[data-theme="dark"] {
+      --bg: #0d0d12;
+      --bg2: #111118;
+      --bg3: #16161f;
+      --surface: #1a1a24;
+      --border: #1e1e2e;
+      --border2: #2a2a3e;
+      --text: #e2e2f0;
+      --text-muted: #6e6e88;
+      --accent: #7c6afb;
+      --accent2: #a78bfa;
+      --green: #4ade80;
+      --yellow: #facc15;
+      --red: #f87171;
+      --blue: #60a5fa;
+      --orange: #fb923c;
+      --card-shadow: 0 1px 3px rgba(0,0,0,.3);
+      --header-bg: #111118;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; font-size: 14px; display: flex; flex-direction: column; transition: background .2s, color .2s; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+    /* ── Header ── */
+    header {
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--card-shadow);
+      padding: 0 24px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1rem; color: var(--accent2); }
+    .logo .bolt { font-size: 1.2rem; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .live-badge {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(26,127,55,0.1); border: 1px solid rgba(26,127,55,0.2);
+      color: var(--green); border-radius: 100px; padding: 3px 10px; font-size: 0.75rem; font-weight: 600;
+    }
+    html[data-theme="dark"] .live-badge { background: rgba(74,222,128,0.1); border-color: rgba(74,222,128,0.2); }
+    .live-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .last-updated { color: var(--text-muted); font-size: 0.75rem; }
+    .uptime-badge {
+      color: var(--text-muted); font-size: 0.75rem; font-family: var(--mono);
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 5px; padding: 3px 8px;
+    }
+    .header-btn {
+      color: var(--text-muted); text-decoration: none; font-size: 0.8rem;
+      padding: 4px 10px; border: 1px solid var(--border); border-radius: 5px;
+      transition: border-color .15s, color .15s; background: none; cursor: pointer;
+    }
+    .header-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+    /* THEME TOGGLE */
+    .theme-toggle { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; width: 34px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .15s, border-color .15s; font-size: 1rem; flex-shrink: 0; }
+    .theme-toggle:hover { border-color: var(--accent2); }
+    .theme-toggle .icon-sun { display: block; }
+    .theme-toggle .icon-moon { display: none; }
+    html[data-theme="dark"] .theme-toggle .icon-sun { display: none; }
+    html[data-theme="dark"] .theme-toggle .icon-moon { display: block; }
+
+    /* ── Main layout ── */
+    main { flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 18px; gap: 16px; }
+
+    /* ── Stat cards row ── */
+    .stats-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; flex-shrink: 0; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 16px;
+      box-shadow: var(--card-shadow);
+    }
+    .stat-label { color: var(--text-muted); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+    .stat-val { font-size: 1.6rem; font-weight: 800; line-height: 1; font-family: var(--mono); }
+    .stat-sub { color: var(--text-muted); font-size: 0.72rem; margin-top: 4px; }
+    .stat-green .stat-val { color: var(--green); }
+    .stat-blue .stat-val { color: var(--blue); }
+    .stat-orange .stat-val { color: var(--orange); }
+    .stat-red .stat-val { color: var(--red); }
+    .stat-accent .stat-val { color: var(--accent2); }
+    .stat-yellow .stat-val { color: var(--yellow); }
+
+    /* ── Two-column grid ── */
+    .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; flex: 1; min-height: 0; }
+    .panel {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+      display: flex; flex-direction: column; min-height: 0; overflow: hidden;
+      box-shadow: var(--card-shadow);
+    }
+    .panel-header {
+      padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg3);
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    html[data-theme="dark"] .panel-header { background: transparent; }
+    .panel-title { font-weight: 700; font-size: 0.85rem; letter-spacing: 0.01em; }
+    .panel-body { flex: 1; overflow-y: auto; }
+
+    /* ── Provider list ── */
+    .provider-row {
+      display: grid; grid-template-columns: 28px 1fr 80px 90px 80px 70px;
+      align-items: center; gap: 12px;
+      padding: 10px 16px; border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+    }
+    .provider-row:last-child { border-bottom: none; }
+    .provider-row:hover { background: rgba(9,105,218,0.04); }
+    html[data-theme="dark"] .provider-row:hover { background: rgba(124,106,251,0.04); }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .status-healthy { background: var(--green); box-shadow: 0 0 5px rgba(26,127,55,0.4); }
+    html[data-theme="dark"] .status-healthy { box-shadow: 0 0 6px rgba(74,222,128,0.5); }
+    .status-degraded { background: var(--yellow); }
+    .status-unavailable, .status-unknown { background: var(--text-muted); }
+    .provider-name { font-weight: 600; font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .provider-modality {
+      font-size: 0.68rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+      display: inline-block; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .mod-text { background: rgba(9,105,218,0.1); color: var(--blue); }
+    .mod-image { background: rgba(188,76,0,0.1); color: var(--orange); }
+    .mod-tts, .mod-stt { background: rgba(130,80,223,0.1); color: #8250df; }
+    html[data-theme="dark"] .mod-text { background: rgba(96,165,250,0.12); }
+    html[data-theme="dark"] .mod-image { background: rgba(251,146,60,0.12); }
+    html[data-theme="dark"] .mod-tts, html[data-theme="dark"] .mod-stt { background: rgba(167,139,250,0.12); color: var(--accent2); }
+    .mod-video { background: rgba(190,24,93,0.1); color: #be185d; }
+    html[data-theme="dark"] .mod-video { background: rgba(244,114,182,0.12); color: #f472b6; }
+
+    .bar-wrap { position: relative; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .bar-fill { position: absolute; top: 0; left: 0; height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+    .bar-green { background: var(--green); }
+    .bar-yellow { background: var(--yellow); }
+    .bar-red { background: var(--red); }
+    .rpm-text { font-family: var(--mono); font-size: 0.72rem; color: var(--text-muted); }
+    .latency-text { font-family: var(--mono); font-size: 0.72rem; color: var(--text-muted); text-align: right; }
+    .tier-badge {
+      font-size: 0.68rem; font-weight: 800; padding: 2px 7px; border-radius: 100px;
+    }
+    .tier-1 { background: rgba(26,127,55,0.12); color: var(--green); border: 1px solid rgba(26,127,55,0.2); }
+    .tier-2 { background: rgba(9,105,218,0.1); color: var(--blue); border: 1px solid rgba(9,105,218,0.15); }
+    html[data-theme="dark"] .tier-1 { background: rgba(74,222,128,0.12); border-color: rgba(74,222,128,0.2); }
+    html[data-theme="dark"] .tier-2 { background: rgba(96,165,250,0.1); border-color: rgba(96,165,250,0.15); }
+
+    /* ── Request log ── */
+    .log-row {
+      display: grid; grid-template-columns: 60px 90px 100px 1fr 56px 56px 60px;
+      align-items: center; gap: 10px;
+      padding: 7px 16px; border-bottom: 1px solid var(--border);
+      font-size: 0.78rem;
+    }
+    .log-row:last-child { border-bottom: none; }
+    .log-row:hover { background: rgba(9,105,218,0.03); }
+    html[data-theme="dark"] .log-row:hover { background: rgba(124,106,251,0.03); }
+    .log-time { color: var(--text-muted); font-family: var(--mono); font-size: 0.7rem; }
+    .log-provider { font-family: var(--mono); color: var(--accent2); font-size: 0.72rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .log-model { color: var(--text-muted); font-size: 0.72rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .log-status {
+      display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 4px;
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+    }
+    .ls-success { background: rgba(26,127,55,0.1); color: var(--green); }
+    .ls-fallback { background: rgba(154,103,0,0.1); color: var(--yellow); }
+    .ls-error { background: rgba(207,34,46,0.1); color: var(--red); }
+    .ls-rate_limited { background: rgba(188,76,0,0.1); color: var(--orange); }
+    html[data-theme="dark"] .ls-success { background: rgba(74,222,128,0.1); }
+    html[data-theme="dark"] .ls-fallback { background: rgba(250,204,21,0.1); }
+    html[data-theme="dark"] .ls-error { background: rgba(248,113,113,0.1); }
+    html[data-theme="dark"] .ls-rate_limited { background: rgba(251,146,60,0.1); }
+    .log-latency { font-family: var(--mono); font-size: 0.72rem; text-align: right; color: var(--text-muted); }
+    .log-tokens { font-family: var(--mono); font-size: 0.72rem; text-align: right; color: var(--text-muted); }
+    .log-header {
+      display: grid; grid-template-columns: 60px 90px 100px 1fr 56px 56px 60px;
+      align-items: center; gap: 10px;
+      padding: 7px 16px 5px; border-bottom: 1px solid var(--border); background: var(--bg3);
+      font-size: 0.68rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em;
+      flex-shrink: 0;
+    }
+    html[data-theme="dark"] .log-header { background: transparent; }
+
+    /* ── Bottom row ── */
+    .bottom-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; flex-shrink: 0; }
+
+    /* ── Key rotation events ── */
+    .event-row {
+      padding: 9px 16px; border-bottom: 1px solid var(--border); font-size: 0.78rem;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .event-row:last-child { border-bottom: none; }
+    .event-time { color: var(--text-muted); font-family: var(--mono); font-size: 0.7rem; min-width: 55px; }
+    .event-msg { flex: 1; color: var(--text); }
+    .event-msg .highlight { color: var(--accent2); font-family: var(--mono); font-size: 0.72rem; }
+
+    /* ── By provider mini chart ── */
+    .provider-stat-row {
+      padding: 9px 16px; border-bottom: 1px solid var(--border);
+      display: grid; grid-template-columns: 1fr 50px 50px 60px; gap: 8px; align-items: center; font-size: 0.78rem;
+    }
+    .provider-stat-row:last-child { border-bottom: none; }
+    .psr-name { font-weight: 600; font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .psr-val { font-family: var(--mono); font-size: 0.75rem; text-align: right; }
+    .psr-green { color: var(--green); }
+    .psr-red { color: var(--red); }
+    .psr-muted { color: var(--text-muted); }
+    .col-hdrs {
+      display: grid; grid-template-columns: 1fr 50px 50px 60px; gap: 8px;
+      padding: 6px 16px 4px; border-bottom: 1px solid var(--border); background: var(--bg3);
+      font-size: 0.67rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em;
+      text-align: right; flex-shrink: 0;
+    }
+    html[data-theme="dark"] .col-hdrs { background: transparent; }
+    .col-hdrs :first-child { text-align: left; }
+
+    /* ── Empty state ── */
+    .empty { display: flex; align-items: center; justify-content: center; height: 80px; color: var(--text-muted); font-size: 0.8rem; }
+
+    /* ── Error banner ── */
+    .error-banner {
+      background: rgba(207,34,46,0.08); border: 1px solid rgba(207,34,46,0.25);
+      color: var(--red); padding: 8px 16px; border-radius: 6px; font-size: 0.8rem; margin: 0 18px;
+      display: none;
+    }
+    html[data-theme="dark"] .error-banner { background: rgba(248,113,113,0.1); border-color: rgba(248,113,113,0.2); }
+    .error-banner.visible { display: block; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span class="bolt">⚡</span> LLMux <span style="color:var(--text-muted);font-weight:400;font-size:0.8rem">/ dashboard</span></div>
+  <div class="header-right">
+    <a href="/playground" class="header-btn">🧪 Playground</a>
+    <a href="/settings" class="header-btn">⚙ Settings</a>
+    <div class="live-badge"><div class="live-dot"></div> LIVE</div>
+    <div class="uptime-badge" id="uptime">uptime: 0s</div>
+    <div class="last-updated" id="last-updated">—</div>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme"><span class="icon-sun">☀️</span><span class="icon-moon">🌙</span></button>
+    <button onclick="logout()" class="header-btn" id="logoutBtn">Sign out</button>
+  </div>
+</header>
+
+<div class="error-banner" id="error-banner"></div>
+
+<main>
+  <!-- ── Stat cards ── -->
+  <div class="stats-row">
+    <div class="stat-card stat-accent">
+      <div class="stat-label">Total Requests</div>
+      <div class="stat-val" id="s-total">0</div>
+      <div class="stat-sub">since startup</div>
+    </div>
+    <div class="stat-card stat-green">
+      <div class="stat-label">Succeeded</div>
+      <div class="stat-val" id="s-success">0</div>
+      <div class="stat-sub" id="s-rate">100% success rate</div>
+    </div>
+    <div class="stat-card stat-red">
+      <div class="stat-label">Failed</div>
+      <div class="stat-val" id="s-error">0</div>
+      <div class="stat-sub" id="s-rl">0 rate-limited</div>
+    </div>
+    <div class="stat-card stat-blue">
+      <div class="stat-label">Tokens Used</div>
+      <div class="stat-val" id="s-tokens">0</div>
+      <div class="stat-sub">total tokens</div>
+    </div>
+    <div class="stat-card stat-yellow">
+      <div class="stat-label">Providers</div>
+      <div class="stat-val" id="s-providers">0</div>
+      <div class="stat-sub" id="s-healthy">0 healthy</div>
+    </div>
+    <div class="stat-card stat-orange">
+      <div class="stat-label">Fallbacks Used</div>
+      <div class="stat-val" id="s-fallbacks">0</div>
+      <div class="stat-sub">auto-routed requests</div>
+    </div>
+    <div class="stat-card" style="--stat-c:#a78bfa">
+      <div class="stat-label">Est. Cost</div>
+      <div class="stat-val" id="s-cost" style="color:#a78bfa">$0.00</div>
+      <div class="stat-sub">USD since startup</div>
+    </div>
+  </div>
+
+  <!-- ── Main content: providers + request log ── -->
+  <div class="content-grid">
+
+    <!-- Provider health matrix -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Provider Health Matrix</span>
+        <span style="font-size:0.72rem;color:var(--text-muted)" id="provider-count">0 providers</span>
+      </div>
+      <div style="display:grid;grid-template-columns:28px 1fr 80px 90px 80px 70px;gap:12px;padding:6px 16px 4px;border-bottom:1px solid var(--border);font-size:0.67rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;flex-shrink:0">
+        <div></div><div>Provider</div><div>Modality</div><div>RPM Used</div><div>Latency</div><div style="text-align:right">Tier</div>
+      </div>
+      <div class="panel-body" id="provider-list">
+        <div class="empty">Loading providers...</div>
+      </div>
+    </div>
+
+    <!-- Live request log -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Live Request Log</span>
+        <span style="font-size:0.72rem;color:var(--text-muted)">last 100 requests</span>
+      </div>
+      <div class="log-header">
+        <div>Time</div><div>Provider</div><div>Model</div><div>Status</div><div>Latency</div><div>Tokens</div><div style="text-align:right">Cost</div>
+      </div>
+      <div class="panel-body" id="request-log">
+        <div class="empty">No requests yet — send one to see it here</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Bottom row ── -->
+  <div class="bottom-row">
+
+    <!-- Usage by provider -->
+    <div class="panel" style="max-height:200px">
+      <div class="panel-header">
+        <span class="panel-title">Usage by Provider</span>
+      </div>
+      <div class="col-hdrs">
+        <div>Provider</div><div>Reqs</div><div>Errors</div><div>Avg ms</div>
+      </div>
+      <div class="panel-body" id="usage-by-provider">
+        <div class="empty">No data</div>
+      </div>
+    </div>
+
+    <!-- Recent fallback/rotation events -->
+    <div class="panel" style="max-height:200px">
+      <div class="panel-header">
+        <span class="panel-title">Routing &amp; Rotation Events</span>
+      </div>
+      <div class="panel-body" id="events-log">
+        <div class="empty">No fallbacks or key rotations yet</div>
+      </div>
+    </div>
+
+    <!-- Rate limit gauges -->
+    <div class="panel" style="max-height:200px">
+      <div class="panel-header">
+        <span class="panel-title">Rate Limit Status</span>
+      </div>
+      <div class="panel-body" id="rl-gauges">
+        <div class="empty">Waiting for data...</div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  const POLL_MS = 3000;
+  let lastData = null;
+  let fallbackCount = 0;
+  const seenEvents = new Set();
+
+  function fmtTime(ts) {
+    const d = new Date(ts);
+    return d.toLocaleTimeString('en-US', { hour12: false, hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  }
+  function fmtNum(n) {
+    if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
+    if (n >= 1e3) return (n/1e3).toFixed(1)+'k';
+    return String(n);
+  }
+  function fmtUptime(s) {
+    if (s < 60) return s+'s';
+    if (s < 3600) return Math.floor(s/60)+'m '+( s%60)+'s';
+    return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m';
+  }
+  function statusColor(pct) {
+    if (pct < 70) return 'bar-green';
+    if (pct < 90) return 'bar-yellow';
+    return 'bar-red';
+  }
+  function modalityClass(m) {
+    return 'mod-' + (m || 'text');
+  }
+
+  function renderProviders(providers) {
+    const el = document.getElementById('provider-list');
+    document.getElementById('provider-count').textContent = providers.length + ' providers';
+    if (!providers.length) { el.innerHTML = '<div class="empty">No providers loaded</div>'; return; }
+
+    el.innerHTML = providers.map(p => {
+      const rpmPct = p.usage ? p.usage.rpmPct : 0;
+      const barClass = statusColor(rpmPct);
+      const statusClass = 'status-' + (p.status || 'unknown');
+      const lat = p.latencyMs ? p.latencyMs + 'ms' : '—';
+      const rpmUsed = p.usage ? p.usage.requestsThisMinute + '/' + p.limits.rpm : '—';
+      return `
+        <div class="provider-row">
+          <div class="status-dot ${statusClass}"></div>
+          <div>
+            <div class="provider-name">${p.name}</div>
+            <div style="margin-top:4px"><div class="bar-wrap"><div class="bar-fill ${barClass}" style="width:${Math.min(rpmPct,100)}%"></div></div></div>
+          </div>
+          <div><span class="provider-modality ${modalityClass(p.modality)}">${p.modality}</span></div>
+          <div class="rpm-text">${rpmUsed}</div>
+          <div class="latency-text">${lat}</div>
+          <div style="text-align:right"><span class="tier-badge tier-${p.tier}">${p.tier === 1 ? '⭐ T1' : '✦ T2'}</span></div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderRequestLog(entries) {
+    const el = document.getElementById('request-log');
+    if (!entries || !entries.length) { el.innerHTML = '<div class="empty">No requests yet — send one to see it here</div>'; return; }
+
+    el.innerHTML = entries.slice(0, 100).map(e => {
+      const statusClass = 'ls-' + e.status;
+      const label = e.status === 'rate_limited' ? 'RL' : e.status;
+      const cost = e.costUsd && e.costUsd > 0 ? '$' + e.costUsd.toFixed(4) : '—';
+      return `
+        <div class="log-row">
+          <div class="log-time">${fmtTime(e.ts)}</div>
+          <div class="log-provider">${e.provider}</div>
+          <div class="log-model">${e.model}</div>
+          <div><span class="log-status ${statusClass}">${label}</span>${e.fallbackFrom && e.fallbackFrom.length ? ' <span style="font-size:0.68rem;color:var(--text-muted)">↩ fallback</span>' : ''}</div>
+          <div class="log-latency">${e.latencyMs > 0 ? e.latencyMs+'ms' : '—'}</div>
+          <div class="log-tokens">${e.tokensUsed > 0 ? fmtNum(e.tokensUsed) : '—'}</div>
+          <div class="log-latency">${cost}</div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderUsageByProvider(byProvider) {
+    const el = document.getElementById('usage-by-provider');
+    if (!byProvider || !byProvider.length) { el.innerHTML = '<div class="empty">No data</div>'; return; }
+    el.innerHTML = byProvider.map(p => `
+      <div class="provider-stat-row">
+        <div class="psr-name">${p.id}</div>
+        <div class="psr-val psr-muted">${fmtNum(p.requests)}</div>
+        <div class="psr-val ${p.error > 0 ? 'psr-red' : 'psr-green'}">${p.error}</div>
+        <div class="psr-val psr-muted">${p.avgLatencyMs > 0 ? p.avgLatencyMs+'ms' : '—'}</div>
+      </div>`).join('');
+  }
+
+  function renderEvents(recentEntries) {
+    const el = document.getElementById('events-log');
+    const events = recentEntries.filter(e =>
+      e.status === 'fallback' || e.status === 'rate_limited'
+    ).slice(0, 30);
+
+    if (!events.length) { el.innerHTML = '<div class="empty">No fallbacks or key rotations yet</div>'; return; }
+
+    el.innerHTML = events.map(e => {
+      let msg = '';
+      if (e.status === 'fallback') {
+        msg = `Fell back to <span class="highlight">${e.provider}</span> from [${e.fallbackFrom.join(', ')}]`;
+      } else if (e.status === 'rate_limited') {
+        msg = `Rate limited on <span class="highlight">${e.provider}</span> — route skipped`;
+      }
+      return `<div class="event-row">
+        <div class="event-time">${fmtTime(e.ts)}</div>
+        <div class="event-msg">${msg}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderRLGauges(providers) {
+    const el = document.getElementById('rl-gauges');
+    const active = providers.filter(p => p.usage && (p.limits.rpm > 0 || p.limits.rpd > 0));
+    if (!active.length) { el.innerHTML = '<div class="empty">No rate limit data</div>'; return; }
+
+    el.innerHTML = active.map(p => {
+      const rpm = p.limits.rpm > 0 ? Math.min(p.usage.rpmPct, 100) : 0;
+      const rpd = p.limits.rpd > 0
+        ? Math.round((p.usage.requestsToday / p.limits.rpd) * 100)
+        : 0;
+      const cooled = p.usage.cooledUntil && p.usage.cooledUntil > Date.now()
+        ? ' 🧊' : '';
+      return `<div style="padding:8px 16px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <span style="font-size:0.75rem;font-weight:600">${p.name}${cooled}</span>
+          <span style="font-size:0.7rem;color:var(--text-muted)">${p.usage.requestsThisMinute}/${p.limits.rpm} RPM</span>
+        </div>
+        <div class="bar-wrap" style="margin-bottom:3px"><div class="bar-fill ${statusColor(rpm)}" style="width:${rpm}%"></div></div>
+        ${p.limits.rpd > 0 ? `<div style="display:flex;justify-content:space-between;margin-top:5px">
+          <span style="font-size:0.7rem;color:var(--text-muted)">Daily</span>
+          <span style="font-size:0.7rem;color:var(--text-muted)">${p.usage.requestsToday}/${p.limits.rpd} RPD</span>
+        </div>
+        <div class="bar-wrap"><div class="bar-fill ${statusColor(rpd)}" style="width:${rpd}%"></div></div>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  function applyStats(data) {
+    lastData = data;
+    const t = data.totals;
+
+    document.getElementById('s-total').textContent = fmtNum(t.total);
+    document.getElementById('s-success').textContent = fmtNum(t.success);
+    document.getElementById('s-error').textContent = fmtNum(t.error);
+    document.getElementById('s-rate').textContent = t.successRate + '% success rate';
+    document.getElementById('s-rl').textContent = fmtNum(t.rateLimited) + ' rate-limited';
+    document.getElementById('s-tokens').textContent = fmtNum(t.tokensTotal);
+    document.getElementById('s-providers').textContent = data.gateway.providerCount;
+    document.getElementById('s-healthy').textContent = data.gateway.healthyCount + ' healthy';
+    document.getElementById('uptime').textContent = 'uptime: ' + fmtUptime(data.gateway.uptime);
+
+    const fb = data.recent.filter(r => r.status === 'fallback').length;
+    document.getElementById('s-fallbacks').textContent = fmtNum(fb);
+    const cost = t.totalCostUsd ?? 0;
+    document.getElementById('s-cost').textContent = '$' + (cost < 0.01 && cost > 0 ? cost.toFixed(4) : cost.toFixed(2));
+
+    document.getElementById('last-updated').textContent = 'updated ' + fmtTime(data.ts);
+
+    renderProviders(data.providers);
+    renderRequestLog(data.recent);
+    renderUsageByProvider(data.byProvider);
+    renderEvents(data.recent);
+    renderRLGauges(data.providers);
+  }
+
+  async function poll() {
+    try {
+      const res = await authFetch('/api/stats');
+      if (res && res.status === 401) { redirectLogin(); return; }
+      if (!res || !res.ok) throw new Error('HTTP ' + (res ? res.status : '?'));
+      const data = await res.json();
+      document.getElementById('error-banner').classList.remove('visible');
+      applyStats(data);
+    } catch (err) {
+      const banner = document.getElementById('error-banner');
+      banner.textContent = '⚠ Cannot reach /api/stats — ' + err.message;
+      banner.classList.add('visible');
+    }
+  }
+
+  poll();
+  setInterval(poll, POLL_MS);
+
+  // ── Auth helpers ────────────────────────────────────────────────────────────
+  // ── Theme ──────────────────────────────────────────────────────────────────
+  function initTheme() {
+    if (localStorage.getItem('llmux_theme') === 'dark')
+      document.documentElement.setAttribute('data-theme', 'dark');
+    else
+      document.documentElement.removeAttribute('data-theme');
+  }
+  function toggleTheme() {
+    const isDark = document.documentElement.hasAttribute('data-theme');
+    if (isDark) { document.documentElement.removeAttribute('data-theme'); localStorage.setItem('llmux_theme', 'light'); }
+    else { document.documentElement.setAttribute('data-theme', 'dark'); localStorage.setItem('llmux_theme', 'dark'); }
+  }
+  initTheme();
+
+  const TOKEN = localStorage.getItem('llmux_token') ?? '';
+
+  function authFetch(url, opts = {}) {
+    const headers = { ...(opts.headers ?? {}) };
+    if (TOKEN) headers['Authorization'] = `Bearer ${TOKEN}`;
+    return fetch(url, { ...opts, headers, credentials: 'include' });
+  }
+
+  async function logout() {
+    await fetch('/api/admin/logout', { method: 'POST', credentials: 'include' });
+    localStorage.removeItem('llmux_token');
+    window.location.href = '/login';
+  }
+
+  async function redirectLogin() {
+    // Only redirect if setup is complete (avoid redirect loop)
+    try {
+      const r = await fetch('/api/admin/setup-status');
+      const d = await r.json();
+      if (d.setupComplete) window.location.href = '/login?returnTo=/dashboard';
+      else window.location.href = '/setup';
+    } catch { window.location.href = '/login?returnTo=/dashboard'; }
+  }
+
+  // Check auth on load (cookie-based auth works even without TOKEN)
+  (async () => {
+    if (TOKEN) {
+      const r = await authFetch('/api/admin/me');
+      if (r && r.status === 401) redirectLogin();
+    }
+  })();
+</script>
+</body>
+</html>

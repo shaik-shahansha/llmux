@@ -1,0 +1,1052 @@
+﻿# ============================================================
+#  LLMux -- Provider Configuration
+#  Multiplex every LLM. Never hit a limit.
+#  All ${ENV_VAR} references are interpolated from .env
+#
+#  Multi-key rotation: use api_keys array to provide multiple
+#  API keys for a provider. Alloy round-robins and auto-rotates
+#  on 429 rate-limit errors.
+#
+#  Example:
+#    api_keys:
+#      - ${GROQ_API_KEY_1}
+#      - ${GROQ_API_KEY_2}
+#      - ${GROQ_API_KEY_3}
+# ============================================================
+
+router:
+  default_strategy: priority        # priority | round-robin | least-busy | latency-based | random-weighted
+  fallback_enabled: true
+  max_fallback_attempts: 5
+
+gateway:
+  max_request_size_mb: 10
+  request_timeout_ms: 60000
+  enable_request_logging: true
+
+providers:
+
+  # -- Tier 1 Text -- Groq ----------------------------------------------------
+  # Updated April 2026: Added GPT-OSS 120B/20B (OpenAI open-weight on Groq)
+  - id: groq-llama3-70b
+    name: Groq
+    modality: text
+    tier: 1
+    enabled: true
+    requires_auth: true
+    api_key: ${GROQ_API_KEY}
+    base_url: https://api.groq.com/openai/v1
+    adapter: openai
+    models:
+      - id: openai/gpt-oss-120b
+        alias: gpt-oss-120b
+        context_window: 131072
+        max_output_tokens: 65536
+      - id: openai/gpt-oss-20b
+        alias: gpt-oss-20b
+        context_window: 131072
+        max_output_tokens: 65536
+      - id: llama-3.3-70b-versatile
+        alias: llama-3.3-70b
+        context_window: 131072
+        max_output_tokens: 32768
+      - id: llama-3.1-8b-instant
+        alias: llama3-8b
+        context_window: 131072
+      - id: meta-llama/llama-4-scout-17b-16e-instruct
+        alias: llama-4-scout
+        context_window: 131072
+      - id: qwen/qwen3-32b
+        alias: qwen3-32b
+        context_window: 131072
+    limits:
+      rpm: 30
+      rpd: 14400
+      tpm: 6000
+      tpd: 500000
+    health_check:
+      enabled: true
+      interval_seconds: 60
+    concurrency: 5
+    timeout: 30000
+    max_retries: 2
+
+  # -- Tier 1 Text -- Cerebras ------------------------------------------------
+  - id: cerebras-llama3
+    name: Cerebras
+    modality: text
+    tier: 1
+    enabled: true
+    requires_auth: true
+    api_key: ${CEREBRAS_API_KEY}
+    base_url: https://api.cerebras.ai/v1
+    adapter: openai
+    models:
+      - id: llama-3.3-70b
+        context_window: 128000
+      - id: llama3.1-8b
+        alias: llama3-8b-cerebras
+        context_window: 8192
+      - id: qwen-3-32b
+        alias: qwen-32b-cerebras
+        context_window: 32768
+    limits:
+      rpm: 30
+      rpd: 14400
+      tpm: 60000
+    health_check:
+      enabled: true
+      interval_seconds: 60
+    concurrency: 5
+    timeout: 30000
+    max_retries: 2
+
+  # -- Tier 1 Text -- Google Gemini -------------------------------------------
+  # Updated April 2026: Added Gemini 3 series (3.1 Pro, 3 Flash, 3.1 Flash-Lite previews)
+  # Gemini 2.0 Flash is deprecated -- use gemini-2.5 stable or gemini-3 preview
+  - id: gemini-flash
+    name: Google Gemini
+    modality: text
+    tier: 1
+    enabled: true
+    requires_auth: true
+    api_key: ${GEMINI_API_KEY}
+    base_url: https://generativelanguage.googleapis.com/v1beta
+    adapter: gemini
+    models:
+      # Gemini 3 series -- preview (April 2026)
+      - id: gemini-3.1-pro-preview
+        alias: gemini-3-pro
+        context_window: 2000000
+      - id: gemini-3-flash-preview
+        alias: gemini-3-flash
+        context_window: 1000000
+      - id: gemini-3.1-flash-lite-preview
+        alias: gemini-3-flash-lite
+        context_window: 1000000
+      # Gemini 2.5 series -- stable
+      - id: gemini-2.5-pro
+        alias: gemini-pro
+        context_window: 1000000
+      - id: gemini-2.5-flash
+        alias: gemini-flash
+        context_window: 1000000
+      - id: gemini-2.5-flash-lite
+        alias: gemini-flash-lite
+        context_window: 1000000
+    limits:
+      rpm: 15
+      rpd: 1000
+      tpm: 250000
+    health_check:
+      enabled: true
+      interval_seconds: 120
+    concurrency: 3
+    timeout: 60000
+    max_retries: 1
+
+  # -- Tier 1 Text -- Mistral AI ----------------------------------------------
+  # Updated April 2026: mistral-small-latest = Mistral Small 4 (119B hybrid MoE, 256K ctx)
+  # Added magistral-medium-latest (reasoning model), mistral-saba-latest
+  - id: mistral-large
+    name: Mistral AI
+    modality: text
+    tier: 1
+    enabled: true
+    requires_auth: true
+    api_key: ${MISTRAL_API_KEY}
+    base_url: https://api.mistral.ai/v1
+    adapter: openai
+    models:
+      - id: mistral-large-latest
+        alias: mistral-large
+        context_window: 131072
+      - id: mistral-small-latest
+        alias: mistral-small
+        context_window: 256000
+      - id: magistral-medium-latest
+        alias: magistral-medium
+        context_window: 131072
+      - id: magistral-small-latest
+        alias: magistral-small
+        context_window: 131072
+      - id: codestral-latest
+        alias: codestral
+        context_window: 256000
+      - id: mistral-saba-latest
+        alias: mistral-saba
+        context_window: 131072
+    limits:
+      rpm: 2
+      tpm: 500000
+    health_check:
+      enabled: true
+      interval_seconds: 120
+    concurrency: 2
+    timeout: 60000
+    max_retries: 1
+
+  # -- Tier 2 Text -- OpenRouter ----------------------------------------------
+  # Updated April 2026: Added deepseek-v3:free, google/gemini-2.5-flash:free, mistral:free
+  - id: openrouter-free
+    name: OpenRouter
+    modality: text
+    tier: 2
+    enabled: true
+    requires_auth: true
+    api_key: ${OPENROUTER_API_KEY}
+    base_url: https://openrouter.ai/api/v1
+    adapter: openai
+    models:
+      - id: deepseek/deepseek-r1:free
+        alias: deepseek-r1-free
+        context_window: 163840
+      - id: deepseek/deepseek-v3:free
+        alias: deepseek-v3-free
+        context_window: 163840
+      - id: google/gemini-2.5-flash-preview:free
+        alias: gemini-flash-free
+        context_window: 1000000
+      - id: meta-llama/llama-3.3-70b-instruct:free
+        alias: llama-3.3-70b-free
+        context_window: 131072
+      - id: qwen/qwen3-coder-480b-a35b-instruct:free
+        alias: qwen3-coder-free
+        context_window: 262144
+      - id: mistralai/mistral-7b-instruct:free
+        alias: mistral-7b-free
+        context_window: 32768
+      - id: openrouter/auto
+        alias: openrouter-auto
+    limits:
+      rpm: 2
+      tpm: 500000
+    health_check:
+      enabled: true
+      interval_seconds: 120
+    concurrency: 2
+    timeout: 60000
+    max_retries: 1
+
+  # -- Tier 2 Text -- Cloudflare Workers AI ----------------------------------
+  - id: cloudflare-text
+    name: Cloudflare Workers AI
+    modality: text
+    tier: 2
+    enabled: true
+    requires_auth: true
+    api_key: ${CLOUDFLARE_API_KEY}
+    account_id: ${CLOUDFLARE_ACCOUNT_ID}
+    base_url: https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/run
+    adapter: cloudflare
+    models:
+      - id: "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+        alias: cf-llama-70b
+        context_window: 128000
+      - id: "@cf/meta/llama-4-scout-17b-16e-instruct"
+        alias: cf-llama-4-scout
+        context_window: 131072
+      - id: "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b"
+        alias: cf-deepseek-r1
+        context_window: 32768
+    limits:
+      neurons_per_day: 10000
+    health_check:
+      enabled: true
+      interval_seconds: 300
+    concurrency: 2
+    timeout: 30000
+    max_retries: 1
+
+  # -- Tier 2 Text -- Hugging Face -------------------------------------------
+  # Updated April 2026: Added Llama-4-Scout, Qwen3-235B
+  - id: huggingface-text
+    name: Hugging Face
+    modality: text
+    tier: 2
+    enabled: true
+    requires_auth: true
+    api_key: ${HUGGINGFACE_API_KEY}
+    base_url: https://api-inference.huggingface.co/v1
+    adapter: openai
+    models:
+      - id: meta-llama/Llama-4-Scout-17B-16E-Instruct
+        alias: hf-llama-4-scout
+        context_window: 131072
+      - id: meta-llama/Llama-3.3-70B-Instruct
+        alias: hf-llama-70b
+        context_window: 131072
+      - id: Qwen/Qwen3-235B-A22B
+        alias: hf-qwen3-235b
+        context_window: 131072
+      - id: Qwen/Qwen2.5-72B-Instruct
+        alias: hf-qwen-72b
+        context_window: 131072
+    limits:
+      rpm: 10
+    health_check:
+      enabled: true
+      interval_seconds: 300
+    concurrency: 2
+    timeout: 120000
+    max_retries: 1
+
+  # -- Tier 2 Text -- SambaNova ----------------------------------------------
+  # Updated April 2026: Added Llama-4-Maverick, updated context windows
+  - id: sambanova-text
+    name: SambaNova
+    modality: text
+    tier: 2
+    enabled: true
+    requires_auth: true
+    api_key: ${SAMBANOVA_API_KEY}
+    base_url: https://api.sambanova.ai/v1
+    adapter: openai
+    models:
+      - id: Meta-Llama-4-Maverick-17B-128E-Instruct
+        alias: sambanova-llama-4-maverick
+        context_window: 131072
+      - id: Meta-Llama-4-Scout-17B-16E-Instruct
+        alias: sambanova-llama-4-scout
+        context_window: 131072
+      - id: DeepSeek-R1
+        alias: sambanova-deepseek-r1
+        context_window: 32768
+      - id: DeepSeek-V3
+        alias: sambanova-deepseek-v3
+        context_window: 32768
+      - id: Meta-Llama-3.3-70B-Instruct
+        alias: sambanova-llama-70b
+        context_window: 8192
+    limits:
+      rpm: 20
+      rpd: 20
+      tpd: 200000
+    health_check:
+      enabled: true
+      interval_seconds: 120
+    concurrency: 2
+    timeout: 60000
+    max_retries: 1
+
+  # -- Tier 2 Text -- Cohere -------------------------------------------------
+  # Updated April 2026: Added command-a-reasoning-08-2025 (thinking), command-a-vision-07-2025
+  # command-r-plus is deprecated Sept 15 2025 -- replaced by command-r7b
+  - id: cohere-text
+    name: Cohere
+    modality: text
+    tier: 2
+    enabled: true
+    requires_auth: true
+    api_key: ${COHERE_API_KEY}
+    base_url: https://api.cohere.com/v2
+    adapter: cohere
+    models:
+      - id: command-a-03-2025
+        alias: cohere-command-a
+        context_window: 256000
+      - id: command-a-reasoning-08-2025
+        alias: cohere-command-a-reasoning
+        context_window: 256000
+      - id: command-a-vision-07-2025
+        alias: cohere-command-a-vision
+        context_window: 128000
+      - id: command-r7b-12-2024
+        alias: cohere-command-r7b
+        context_window: 128000
+    limits:
+      rpm: 10
+      tpm: 100000
+    health_check:
+      enabled: true
+      interval_seconds: 120
+    concurrency: 2
+    timeout: 60000
+    max_retries: 1
+
+  # -- Tier 2 Text -- DeepSeek -----------------------------------------------
+  - id: deepseek-text
+    name: DeepSeek
+    modality: text
+    tier: 2
+    enabled: true
+    requires_auth: true
+    api_key: ${DEEPSEEK_API_KEY}
+    base_url: https://api.deepseek.com/v1
+    adapter: openai
+    models:
+      - id: deepseek-chat
+        alias: deepseek-v3
+        context_window: 131072
+      - id: deepseek-reasoner
+        alias: deepseek-r1
+        context_window: 131072
+    limits:
+      rpm: 10
+    health_check:
+      enabled: true
+      interval_seconds: 120
+    concurrency: 3
+    timeout: 60000
+    max_retries: 1
+
+  # -- Tier 2 Text -- NVIDIA NIM ---------------------------------------------
+  # Updated April 2026: Added Nemotron 3 Super 120B (1M ctx), Qwen3.5 397B, Mistral Small 4
+  # Also: minimax-m2.5, step-3.5-flash -- all free endpoints on build.nvidia.com
+  - id: nvidia-nim
+    name: NVIDIA NIM
+    modality: text
+    tier: 2
+    enabled: true
+    requires_auth: true
+    api_key: ${NVIDIA_NIM_API_KEY}
+    base_url: https://integrate.api.nvidia.com/v1
+    adapter: openai
+    models:
+      - id: nvidia/nemotron-3-super-120b-a12b
+        alias: nvidia-nemotron-super
+        context_window: 1000000
+      - id: qwen/qwen3.5-397b-a17b
+        alias: nvidia-qwen3-5-397b
+        context_window: 131072
+      - id: qwen/qwen3.5-122b-a10b
+        alias: nvidia-qwen3-5-122b
+        context_window: 131072
+      - id: mistralai/mistral-small-4-119b-2603
+        alias: nvidia-mistral-small-4
+        context_window: 256000
+      - id: minimaxai/minimax-m2.5
+        alias: nvidia-minimax-m2-5
+        context_window: 131072
+      - id: stepfun-ai/step-3.5-flash
+        alias: nvidia-step-3-5-flash
+        context_window: 131072
+    limits:
+      rpm: 40
+    health_check:
+      enabled: true
+      interval_seconds: 120
+    concurrency: 3
+    timeout: 60000
+    max_retries: 1
+
+  # -- Tier 2 Text -- GitHub Models ------------------------------------------
+  # Updated April 2026: Added gpt-5.4, claude-sonnet-4-6, Llama 4 models
+  - id: github-models
+    name: GitHub Models
+    modality: text
+    tier: 2
+    enabled: true
+    requires_auth: true
+    api_key: ${GITHUB_MODELS_API_KEY}
+    base_url: https://models.inference.ai.azure.com
+    adapter: openai
+    models:
+      - id: gpt-5.4
+        alias: github-gpt5-4
+        context_window: 1000000
+      - id: claude-sonnet-4-6
+        alias: github-claude-sonnet
+        context_window: 1000000
+      - id: gpt-4o
+        alias: github-gpt4o
+        context_window: 128000
+      - id: Meta-Llama-4-Scout-17B-16E-Instruct
+        alias: github-llama-4-scout
+        context_window: 131072
+      - id: Meta-Llama-3.3-70B-Instruct
+        alias: github-llama-70b
+        context_window: 131072
+      - id: DeepSeek-R1
+        alias: github-deepseek-r1
+        context_window: 131072
+    limits:
+      rpm: 15
+      rpd: 150
+    health_check:
+      enabled: true
+      interval_seconds: 120
+    concurrency: 2
+    timeout: 30000
+    max_retries: 1
+
+  # -- Tier 2 Text -- xAI Grok -----------------------------------------------
+  # Updated April 2026: grok-3 family OpenAI-compatible API
+  # API key from https://console.x.ai/
+  - id: xai-grok
+    name: xAI Grok
+    modality: text
+    tier: 2
+    enabled: true
+    requires_auth: true
+    api_key: ${XAI_API_KEY}
+    base_url: https://api.x.ai/v1
+    adapter: openai
+    models:
+      - id: grok-3
+        alias: grok-3
+        context_window: 131072
+      - id: grok-3-mini
+        alias: grok-3-mini
+        context_window: 131072
+      - id: grok-3-fast
+        alias: grok-3-fast
+        context_window: 131072
+      - id: grok-3-mini-fast
+        alias: grok-3-mini-fast
+        context_window: 131072
+    limits:
+      rpm: 60
+    health_check:
+      enabled: true
+      interval_seconds: 120
+    concurrency: 5
+    timeout: 30000
+    max_retries: 2
+
+  # -- Text -- Pollinations AI -----------------------------------------------
+  # OpenAI-compatible chat completions via gen.pollinations.ai.
+  # Models include openai (GPT-4o), claude, gemini, mistral, deepseek-r1, grok, llama.
+  # API key from https://enter.pollinations.ai/ (free tier available).
+  - id: pollinations-text
+    name: Pollinations AI (Text)
+    modality: text
+    tier: 2
+    enabled: true
+    requires_auth: false
+    api_key: ${POLLINATIONS_API_KEY}
+    base_url: https://gen.pollinations.ai
+    adapter: openai
+    models:
+      - id: openai
+        alias: pollinations-openai
+        context_window: 128000
+      - id: openai-large
+        alias: pollinations-gpt4o-large
+        context_window: 128000
+      - id: claude
+        alias: pollinations-claude
+        context_window: 200000
+      - id: gemini
+        alias: pollinations-gemini
+        context_window: 1000000
+      - id: gemini-3-flash-lite
+        alias: pollinations-gemini-flash-lite
+        context_window: 1000000
+      - id: deepseek-r1
+        alias: pollinations-deepseek-r1
+        context_window: 163840
+      - id: mistral
+        alias: pollinations-mistral
+        context_window: 131072
+      - id: llama
+        alias: pollinations-llama
+        context_window: 131072
+      - id: grok
+        alias: pollinations-grok
+        context_window: 131072
+    limits:
+      rpm: 15
+    health_check:
+      enabled: true
+      interval_seconds: 120
+    concurrency: 3
+    timeout: 60000
+    max_retries: 1
+
+  # -- Image -- Pollinations AI ----------------------------------------------
+  - id: pollinations-image
+    name: Pollinations AI (Image)
+    modality: image
+    tier: 1
+    enabled: true
+    requires_auth: false
+    api_key: ${POLLINATIONS_API_KEY}
+    base_url: https://gen.pollinations.ai
+    adapter: custom
+    models:
+      - id: zimage
+        alias: pollinations-zimage
+      - id: flux
+        alias: pollinations-flux
+      - id: seedream
+        alias: pollinations-seedream
+      - id: seedream5
+        alias: pollinations-seedream5
+      - id: gptimage
+        alias: pollinations-gptimage
+      - id: gptimage-large
+        alias: pollinations-gptimage-large
+      - id: wan-image
+        alias: pollinations-wan-image
+      - id: kontext
+        alias: pollinations-kontext
+      - id: nova-canvas
+        alias: pollinations-nova-canvas
+    limits:
+      rpm: 10
+    health_check:
+      enabled: true
+      interval_seconds: 300
+    concurrency: 2
+    timeout: 60000
+    max_retries: 1
+
+  # -- Image -- Cloudflare Workers AI ----------------------------------------
+  - id: cloudflare-image
+    name: Cloudflare Workers AI (Image)
+    modality: image
+    tier: 1
+    enabled: true
+    requires_auth: true
+    api_key: ${CLOUDFLARE_API_KEY}
+    account_id: ${CLOUDFLARE_ACCOUNT_ID}
+    base_url: https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/run
+    adapter: cloudflare
+    models:
+      - id: "@cf/black-forest-labs/flux-2-klein-4b"
+        alias: cf-flux-klein
+      - id: "@cf/black-forest-labs/flux-1-schnell"
+        alias: cf-flux-schnell
+      - id: "@cf/lykon/dreamshaper-8-lcm"
+        alias: cf-dreamshaper
+    limits:
+      neurons_per_day: 10000
+    health_check:
+      enabled: true
+      interval_seconds: 300
+    concurrency: 2
+    timeout: 60000
+    max_retries: 1
+
+  # -- Image -- Together AI --------------------------------------------------
+  - id: together-image
+    name: Together AI (Image)
+    modality: image
+    tier: 2
+    enabled: true
+    requires_auth: true
+    api_key: ${TOGETHER_API_KEY}
+    base_url: https://api.together.xyz/v1
+    adapter: openai
+    models:
+      - id: black-forest-labs/FLUX.1-schnell-Free
+        alias: together-flux-schnell
+      - id: black-forest-labs/FLUX.1-dev
+        alias: together-flux-dev
+    limits:
+      rpm: 10
+    health_check:
+      enabled: true
+      interval_seconds: 300
+    concurrency: 2
+    timeout: 60000
+    max_retries: 1
+
+  # -- Image -- Hugging Face -------------------------------------------------
+  - id: huggingface-image
+    name: Hugging Face (Image)
+    modality: image
+    tier: 2
+    enabled: true
+    requires_auth: true
+    api_key: ${HUGGINGFACE_API_KEY}
+    base_url: https://api-inference.huggingface.co
+    adapter: custom
+    models:
+      - id: black-forest-labs/FLUX.1-schnell
+        alias: hf-flux-schnell
+      - id: stabilityai/stable-diffusion-xl-base-1.0
+        alias: hf-sdxl
+    limits:
+      rpm: 5
+    health_check:
+      enabled: true
+      interval_seconds: 300
+    concurrency: 1
+    timeout: 120000
+    max_retries: 1
+
+  # -- Image -- fal.ai -------------------------------------------------------
+  - id: fal-image
+    name: fal.ai
+    modality: image
+    tier: 2
+    enabled: true
+    requires_auth: true
+    api_key: ${FAL_API_KEY}
+    base_url: https://fal.run
+    adapter: custom
+    models:
+      - id: fal-ai/flux/schnell
+        alias: fal-flux-schnell
+      - id: fal-ai/flux-pro/v1.1
+        alias: fal-flux-pro
+    limits:
+      rpm: 10
+    health_check:
+      enabled: true
+      interval_seconds: 300
+    concurrency: 2
+    timeout: 60000
+    max_retries: 1
+
+  # -- STT -- Groq Whisper ---------------------------------------------------
+  - id: groq-whisper
+    name: Groq Whisper
+    modality: stt
+    tier: 1
+    enabled: true
+    requires_auth: true
+    api_key: ${GROQ_API_KEY}
+    base_url: https://api.groq.com/openai/v1
+    adapter: openai
+    models:
+      - id: whisper-large-v3-turbo
+        alias: whisper-turbo
+      - id: whisper-large-v3
+        alias: whisper-large
+      - id: distil-whisper-large-v3-en
+        alias: whisper-distil-en
+    limits:
+      rpm: 20
+      rpd: 2000
+    health_check:
+      enabled: true
+      interval_seconds: 120
+    concurrency: 3
+    timeout: 60000
+    max_retries: 2
+
+  # -- TTS -- Groq PlayAI ----------------------------------------------------
+  - id: groq-tts
+    name: Groq TTS (PlayAI)
+    modality: tts
+    tier: 1
+    enabled: true
+    requires_auth: true
+    api_key: ${GROQ_API_KEY}
+    base_url: https://api.groq.com/openai/v1
+    adapter: openai
+    models:
+      - id: playai-tts
+        alias: playai-tts
+      - id: playai-tts-arabic
+        alias: playai-tts-arabic
+    limits:
+      rpm: 20
+      rpd: 100
+    health_check:
+      enabled: true
+      interval_seconds: 120
+    concurrency: 2
+    timeout: 30000
+    max_retries: 1
+
+  # -- TTS -- ElevenLabs -----------------------------------------------------
+  - id: elevenlabs
+    name: ElevenLabs
+    modality: tts
+    tier: 1
+    enabled: true
+    requires_auth: true
+    api_key: ${ELEVENLABS_API_KEY}
+    base_url: https://api.elevenlabs.io/v1
+    adapter: custom
+    models:
+      - id: eleven_flash_v2_5
+        alias: elevenlabs-flash
+      - id: eleven_multilingual_v2
+        alias: elevenlabs-multilingual
+      - id: eleven_turbo_v2_5
+        alias: elevenlabs-turbo
+    limits:
+      chars_per_month: 10000
+    health_check:
+      enabled: true
+      interval_seconds: 300
+    concurrency: 2
+    timeout: 30000
+    max_retries: 1
+
+  # -- TTS/STT -- Deepgram ---------------------------------------------------
+  - id: deepgram-tts
+    name: Deepgram TTS
+    modality: tts
+    tier: 1
+    enabled: true
+    requires_auth: true
+    api_key: ${DEEPGRAM_API_KEY}
+    base_url: https://api.deepgram.com/v1
+    adapter: custom
+    models:
+      - id: aura-2-en-us
+        alias: deepgram-aura-2
+      - id: aura-asteria-en
+        alias: deepgram-aura
+    limits:
+      rpm: 30
+    health_check:
+      enabled: true
+      interval_seconds: 300
+    concurrency: 3
+    timeout: 30000
+    max_retries: 1
+
+  - id: deepgram-stt
+    name: Deepgram STT
+    modality: stt
+    tier: 1
+    enabled: true
+    requires_auth: true
+    api_key: ${DEEPGRAM_API_KEY}
+    base_url: https://api.deepgram.com/v1
+    adapter: custom
+    models:
+      - id: nova-3
+        alias: deepgram-nova-3
+      - id: nova-2
+        alias: deepgram-nova-2
+    limits:
+      rpm: 30
+    health_check:
+      enabled: true
+      interval_seconds: 300
+    concurrency: 3
+    timeout: 60000
+    max_retries: 1
+
+  # -- TTS -- Fish Audio -----------------------------------------------------
+  - id: fish-audio
+    name: Fish Audio
+    modality: tts
+    tier: 2
+    enabled: true
+    requires_auth: true
+    api_key: ${FISH_AUDIO_API_KEY}
+    base_url: https://api.fish.audio/v1
+    adapter: custom
+    models:
+      - id: speech-1.6
+        alias: fish-speech-1-6
+      - id: speech-1.5
+        alias: fish-speech-1-5
+    limits:
+      rpm: 10
+    health_check:
+      enabled: true
+      interval_seconds: 300
+    concurrency: 2
+    timeout: 30000
+    max_retries: 1
+
+  # -- TTS/STT -- Pollinations AI --------------------------------------------
+  - id: pollinations-tts
+    name: Pollinations AI (TTS)
+    modality: tts
+    tier: 2
+    enabled: true
+    requires_auth: false
+    api_key: ${POLLINATIONS_API_KEY}
+    base_url: https://gen.pollinations.ai
+    adapter: custom
+    models:
+      - id: tts-1
+        alias: pollinations-tts
+      - id: elevenmusic
+        alias: pollinations-music
+    limits:
+      rpm: 10
+    health_check:
+      enabled: true
+      interval_seconds: 300
+    concurrency: 2
+    timeout: 60000
+    max_retries: 1
+
+  - id: pollinations-stt
+    name: Pollinations AI (STT)
+    modality: stt
+    tier: 2
+    enabled: true
+    requires_auth: false
+    api_key: ${POLLINATIONS_API_KEY}
+    base_url: https://gen.pollinations.ai
+    adapter: custom
+    models:
+      - id: whisper-large-v3
+        alias: pollinations-whisper
+      - id: scribe
+        alias: pollinations-scribe
+    limits:
+      rpm: 10
+    health_check:
+      enabled: true
+      interval_seconds: 300
+    concurrency: 2
+    timeout: 60000
+    max_retries: 1
+
+  # -- Video -- Replicate ----------------------------------------------------
+  - id: replicate-video
+    name: Replicate
+    modality: video
+    tier: 2
+    enabled: true
+    requires_auth: true
+    api_key: ${REPLICATE_API_KEY}
+    base_url: https://api.replicate.com/v1
+    adapter: custom
+    models:
+      - id: minimax/video-01
+        alias: replicate-minimax
+      - id: tencent/hunyuan-video
+        alias: replicate-hunyuan
+    limits:
+      rpm: 5
+    health_check:
+      enabled: true
+      interval_seconds: 300
+    concurrency: 1
+    timeout: 300000
+    max_retries: 1
+
+  # -- Video -- Hugging Face -------------------------------------------------
+  - id: huggingface-video
+    name: Hugging Face (Video)
+    modality: video
+    tier: 2
+    enabled: true
+    requires_auth: true
+    api_key: ${HUGGINGFACE_API_KEY}
+    base_url: https://api-inference.huggingface.co
+    adapter: custom
+    models:
+      - id: tencent/HunyuanVideo
+        alias: hf-hunyuan-video
+    limits:
+      rpm: 3
+    health_check:
+      enabled: true
+      interval_seconds: 300
+    concurrency: 1
+    timeout: 300000
+    max_retries: 1
+
+    # -- Paid providers (disabled by default -- enable via Settings UI or set your API key) --
+    # Updated April 2026: OpenAI flagship is gpt-5.4 (1M ctx), Anthropic is claude-opus-4-6 (1M ctx)
+
+  - id: openai
+    name: OpenAI
+    enabled: false
+    tier: 2
+    modality: text
+    requires_auth: true
+    base_url: https://api.openai.com/v1
+    adapter: openai
+    api_key: ${OPENAI_API_KEY}
+    models:
+      - id: gpt-5.4
+        alias: gpt-5-4
+        context_window: 1000000
+        max_output_tokens: 131072
+      - id: gpt-5.4-mini
+        alias: gpt-5-4-mini
+        context_window: 400000
+        max_output_tokens: 131072
+      - id: gpt-5.4-nano
+        alias: gpt-5-4-nano
+        context_window: 400000
+        max_output_tokens: 131072
+      - id: gpt-4o
+        alias: gpt-4o
+        context_window: 128000
+      - id: gpt-4o-mini
+        alias: gpt-4o-mini
+        context_window: 128000
+    limits:
+      rpm: 500
+      tpm: 150000
+    concurrency: 10
+    timeout: 120000
+    max_retries: 2
+
+  - id: anthropic
+    name: Anthropic
+    enabled: false
+    tier: 2
+    modality: text
+    requires_auth: true
+    base_url: https://api.anthropic.com/v1
+    adapter: custom
+    api_key: ${ANTHROPIC_API_KEY}
+    models:
+      - id: claude-opus-4-6
+        alias: claude-opus
+        context_window: 1000000
+        max_output_tokens: 131072
+      - id: claude-sonnet-4-6
+        alias: claude-sonnet
+        context_window: 1000000
+        max_output_tokens: 65536
+      - id: claude-haiku-4-5
+        alias: claude-haiku
+        context_window: 200000
+        max_output_tokens: 65536
+    limits:
+      rpm: 50
+      tpm: 100000
+    concurrency: 5
+    timeout: 120000
+    max_retries: 2
+
+    # -- New free-tier providers (April 2026) --
+
+  - id: kimi
+    name: Moonshot AI (Kimi)
+    enabled: false
+    tier: 1
+    modality: text
+    requires_auth: true
+    base_url: https://api.moonshot.cn/v1
+    adapter: openai
+    api_key: ${KIMI_API_KEY}
+    models:
+      - id: kimi-k2.5
+        alias: kimi-k2-5
+        context_window: 131072
+      - id: kimi-k2-thinking
+        alias: kimi-thinking
+        context_window: 131072
+      - id: moonshot-v1-128k
+        alias: moonshot-128k
+        context_window: 131072
+    limits:
+      rpm: 3
+      tpm: 128000
+    concurrency: 3
+    timeout: 120000
+    max_retries: 2
+
+  - id: glm
+    name: Zhipu AI (GLM)
+    enabled: false
+    tier: 2
+    modality: text
+    requires_auth: true
+    base_url: https://open.bigmodel.cn/api/paas/v4
+    adapter: openai
+    api_key: ${GLM_API_KEY}
+    models:
+      - id: glm-5
+        alias: glm-5
+        context_window: 131072
+      - id: glm-4-flash
+        alias: glm-4-flash
+        context_window: 131072
+    limits:
+      rpm: 10
+      tpm: 100000
+    concurrency: 3
+    timeout: 60000
+    max_retries: 2
